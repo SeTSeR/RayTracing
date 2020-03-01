@@ -1,3 +1,8 @@
-#include <iostream>
+#ifndef __RENDER_HPP__
+#define __RENDER_HPP__
 
-void render(const std::string &filename);
+#include <filesystem>
+
+void render(int width, int height, const std::filesystem::path &path);
+
+#endif

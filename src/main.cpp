@@ -1,6 +1,6 @@
 #include "Render.hpp"
 
 int main() {
-        render("./out.ppm");
+        render(1024, 768, "./out.png");
         return 0;
 }
