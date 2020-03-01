@@ -37,3 +37,6 @@ compile_commands.json
 # Build directories
 Debug/
 Release/
+
+# Resulting image
+out.png
