@@ -9,9 +9,9 @@ void render(int width, int height, const std::filesystem::path &path) {
 
         for (size_t j = 0; j < height; ++j) {
                 for (size_t i = 0; i < width; ++i) {
-                        framebuffer[i][j] = Vec3(j/float(height), i/float(width), 0.f);
+                        framebuffer[j][i] = Vec3(j/float(height), i/float(width), 0.f);
                 }
         }
 
-        framebuffer.write(path);
+        framebuffer.write_png(path);
 }
