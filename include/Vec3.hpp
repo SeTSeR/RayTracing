@@ -1,6 +1,8 @@
 #ifndef __VEC3_HPP__
 #define __VEC3_HPP__
 
+#include <cmath>
+
 template<typename T>
 class Vec3 {
 private:
@@ -23,6 +25,41 @@ public:
                         static_assert("Unreachable");
                 }
         };
+        Vec3& operator+=(const Vec3 &other) {
+                x += other.x;
+                y += other.y;
+                z += other.z;
+                return *this;
+        };
+        Vec3 operator+(const Vec3 &other) const {
+                Vec3 result = *this;
+                result += other;
+                return result;
+        };
+        Vec3& operator-=(const Vec3 &other) {
+                x -= other.x;
+                y -= other.y;
+                z -= other.z;
+                return *this;
+        };
+        Vec3 operator-(const Vec3 &other) const {
+                Vec3 result = *this;
+                result -= other;
+                return result;
+        };
+        T operator*(const Vec3 &other) const {
+                return x * other.x + y * other.y + z * other.z;
+        };
+        T length() const {
+                return std::sqrt(x*x + y*y + z*z);
+        }
+        Vec3& normalize() {
+                auto len = std::sqrt(x*x + y*y + z*z);
+                x /= len;
+                y /= len;
+                z /= len;
+                return *this;
+        }
 };
 
 #endif
