@@ -23,9 +23,11 @@ void render(int width, int height, const std::filesystem::path &path) {
 
         float fov = M_PI/2;
         Scene<float> scene;
-        auto sphere = std::make_unique<Sphere<float>>(Vec3<float>(-3.f, 0.f, -16.f), 2.f, Material<float>::ivory());
-        scene.addShape(std::move(sphere));
-
+        scene.addShape(std::make_unique<Sphere<float>>(Vec3(-3.f, 0.f, -16.f), 2.f, Material<float>::ivory()));
+        scene.addShape(std::make_unique<Sphere<float>>(Vec3(-1.f, -1.5f, -12.f), 2.f, Material<float>::red_rubber()));
+        scene.addShape(std::make_unique<Sphere<float>>(Vec3(1.5f, -0.5f, -18.f), 3.f, Material<float>::red_rubber()));
+        scene.addShape(std::make_unique<Sphere<float>>(Vec3(7.f, 5.f, -18.f), 4.f, Material<float>::red_rubber()));
+        
         for (size_t j = 0; j < height; ++j) {
                 for (size_t i = 0; i < width; ++i) {
                         float x = (2*(i + 0.5)/(float)width - 1)*tan(fov/2.)*width/(float)height;
