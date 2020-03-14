@@ -1,7 +1,7 @@
 #ifndef __IMAGE_HPP__
 #define __IMAGE_HPP__
 
-#include <Vec3.hpp>
+#include "Vec3.hpp"
 
 #include <filesystem>
 #include <vector>
