@@ -47,6 +47,17 @@ public:
                 result -= other;
                 return result;
         };
+        Vec3 operator*=(T coef) {
+                x *= coef;
+                y *= coef;
+                z *= coef;
+                return *this;
+        };
+        Vec3 operator*(T coef) const {
+                Vec3 result = *this;
+                result *= coef;
+                return result;
+        };
         T operator*(const Vec3 &other) const {
                 return x * other.x + y * other.y + z * other.z;
         };
