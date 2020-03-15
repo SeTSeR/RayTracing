@@ -1,9 +1,10 @@
 #include "Image.hpp"
+#include "Material.hpp"
+#include "Plane.hpp"
 #include "Render.hpp"
+#include "Scene.hpp"
 #include "Sphere.hpp"
 #include "Vec3.hpp"
-#include "Material.hpp"
-#include "Scene.hpp"
 
 #include <cmath>
 #include <memory>
@@ -27,6 +28,7 @@ void render(int width, int height, const std::filesystem::path &path) {
         scene.addShape(std::make_unique<Sphere<float>>(Vec3(-1.f, -1.5f, -12.f), 2.f, Material<float>::red_rubber()));
         scene.addShape(std::make_unique<Sphere<float>>(Vec3(1.5f, -0.5f, -18.f), 3.f, Material<float>::red_rubber()));
         scene.addShape(std::make_unique<Sphere<float>>(Vec3(7.f, 5.f, -18.f), 4.f, Material<float>::red_rubber()));
+        //        scene.addShape(std::make_unique<Plane<float>>(Vec3(0.f, 0.f, 1.f), Vec3(-20.f, -20.f, -20.f), Material<float>::red_rubber()));
         
         for (size_t j = 0; j < height; ++j) {
                 for (size_t i = 0; i < width; ++i) {
