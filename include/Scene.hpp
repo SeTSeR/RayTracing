@@ -1,16 +1,23 @@
 #ifndef _SCENE_HPP_
 #define _SCENE_HPP_
 
+#include "Light.hpp"
 #include "Shape.hpp"
 
+#include <algorithm>
+#include <iostream>
 #include <memory>
 #include <vector>
 
 template<typename T>
 class Scene {
 private:
+        std::vector<Light<T>> lights;
         std::vector<std::unique_ptr<Shape<T>>> scene;
 public:
+        void addLight(Light<T> &&light) {
+                lights.push_back(std::move(light));
+        }
         void addShape(std::unique_ptr<Shape<T>> shape) {
                 scene.push_back(std::move(shape));
         }
@@ -27,6 +34,16 @@ public:
                         }
                 }
                 return dist < 1000;
+        }
+        Vec3<T> light_color(const Vec3<T> &point,
+                      const Vec3<T> &norm,
+                      const Material<T> &material) const {
+                T diffuse_light_intensity = {};
+                for (const auto &light : lights) {
+                        Vec3<T> light_direction = (light.getPosition() - point).normalize();
+                        diffuse_light_intensity += light.getIntensity() * std::max(0.f, light_direction * norm);
+                }
+                return material.getColor() * diffuse_light_intensity;
         }
 };
 

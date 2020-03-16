@@ -16,7 +16,7 @@ Vec3<float> cast_ray(const Vec3<float> &origin, const Vec3<float> &direction, co
         if (!scene.intersects(origin, direction, point, norm, material)) {
                 return Vec3(0.2f, 0.7f, 0.8f);
         }
-        return material.getColor();
+        return scene.light_color(point, norm, material);
 }
 
 void render(int width, int height, const std::filesystem::path &path) {
@@ -29,6 +29,7 @@ void render(int width, int height, const std::filesystem::path &path) {
         scene.addShape(std::make_unique<Sphere<float>>(Vec3(1.5f, -0.5f, -18.f), 3.f, Material<float>::red_rubber()));
         scene.addShape(std::make_unique<Sphere<float>>(Vec3(7.f, 5.f, -18.f), 4.f, Material<float>::red_rubber()));
         //        scene.addShape(std::make_unique<Plane<float>>(Vec3(0.f, 0.f, 1.f), Vec3(-20.f, -20.f, -20.f), Material<float>::red_rubber()));
+        scene.addLight(Light(Vec3(-20.f, 20.f, 20.f), 1.5f));
         
         for (size_t j = 0; j < height; ++j) {
                 for (size_t i = 0; i < width; ++i) {

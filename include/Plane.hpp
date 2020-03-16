@@ -13,7 +13,7 @@ private:
         Material<T> material;
 public:
   Plane(const Vec3<T> &norm, const Vec3<T> point, const Material<T> &material)
-      : norm(norm), point(point), material(material){};
+          : norm(norm.normalize()), point(point), material(material){};
         virtual bool intersects(const Vec3<T> &origin, const Vec3<T> &direction, T& distance)  const {
                 auto mp = direction * norm;
                 auto distvec = origin - point;
