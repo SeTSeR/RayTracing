@@ -11,6 +11,7 @@
 #include <vector>
 
 constexpr int MAX_DEPTH = 4;
+constexpr int SAMPLES_COUNT = 2;
 
 Vec<3, float> cast_ray(const Vec<3, float> &origin, const Vec<3, float> &direction, const Scene<float> &scene, int depth = 0) {
         Vec<3, float> point, norm;
@@ -48,10 +49,16 @@ void render(int width, int height, const std::filesystem::path &path) {
         
         for (size_t j = 0; j < height; ++j) {
                 for (size_t i = 0; i < width; ++i) {
-                        float x = (2*(i + 0.5)/(float)width - 1)*tan(fov/2.)*width/(float)height;
-                        float y = -(2*(j + 0.5)/(float)height - 1)*tan(fov/2.);
-                        Vec<3, float> dir = Vec(x, y, -1).normalize();
-                        framebuffer[j][i] = cast_ray(Vec(0.f, 0, 0), dir, scene);
+                        Vec<3, float> cell_color = {};
+                        for (size_t k = 0; k < SAMPLES_COUNT; ++k) {
+                                for (size_t l = 0; l < SAMPLES_COUNT; ++l) {
+                                        float x = (2*(i*SAMPLES_COUNT + k + 0.5)/(float)(width*SAMPLES_COUNT) - 1)*tan(fov/2.)*width/(float)height;
+                                        float y = -(2*(j*SAMPLES_COUNT + l + 0.5)/(float)(height*SAMPLES_COUNT) - 1)*tan(fov/2.);
+                                        Vec<3, float> dir = Vec(x, y, -1).normalize();
+                                        cell_color += cast_ray(Vec(0.f, 0, 0), dir, scene);
+                                }
+                        }
+                        framebuffer[j][i] = cell_color * (1.f/(SAMPLES_COUNT*SAMPLES_COUNT));
                         float max = std::max(framebuffer[j][i][0], std::max(framebuffer[j][i][1], framebuffer[j][i][2]));
                         if (max > 1) framebuffer[j][i] *= (1./max);
                 }
