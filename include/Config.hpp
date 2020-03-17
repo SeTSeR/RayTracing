@@ -5,12 +5,12 @@
 #include <optional>
 
 struct Config {
-        std::filesystem::path background_path;
+        std::optional<std::filesystem::path> background_path;
         std::filesystem::path output_path;
-        int threads_num;
+        std::optional<int> threads_num;
         int scene_num;
-        int width = 1024;
-        int height = 768;
+        int width = 1056;
+        int height = 594;
 };
 
 std::optional<Config> parse_args(int argc, char* argv[]);

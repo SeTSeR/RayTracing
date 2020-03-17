@@ -20,7 +20,7 @@ std::optional<Config> parse_args(int argc, char* argv[]) {
                         config.scene_num = atoi(argv[param_num + 1]);
                 } else if (streq("-threads", argv[param_num])) {
                         config.threads_num = atoi(argv[param_num + 1]);
-                } else if (streq("background", argv[param_num])) {
+                } else if (streq("-background", argv[param_num])) {
                         config.background_path = argv[param_num + 1];
                 }
         }

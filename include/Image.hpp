@@ -26,6 +26,7 @@ public:
         Proxy operator[](int i) {
                 return Proxy(i, width, buffer);
         };
+        int read_image(const std::filesystem::path& path);
         int write_png(const std::filesystem::path& path);
 };
 
