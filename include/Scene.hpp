@@ -38,7 +38,9 @@ public:
         Vec<3, T> light_color(const Vec<3, T> &point,
                               const Vec<3, T> &direction,
                               const Vec<3, T> &norm,
-                              const Material<T> &material) const {
+                              const Material<T> &material,
+                              const Vec<3, T> &reflect_color,
+                              const Vec<3, T> &refract_color) const {
                 T diffuse_light_intensity = {};
                 T specular_light_intensity = {};
                 for (const auto &light : lights) {
@@ -52,7 +54,9 @@ public:
                                 specular_light_intensity += light.getIntensity() * std::pow(std::max(0.f, light_direction.reflect(norm) * direction), material.getSpecularExponent());
                         }
                 }
-                return material.getDiffuseColor() * diffuse_light_intensity * material.getAlbedo()[0] + Vec<3, float>(1.f, 1.f, 1.f) * specular_light_intensity * material.getAlbedo()[1];
+                return material.getDiffuseColor() * diffuse_light_intensity * material.getAlbedo()[0] +
+                        Vec<3, float>(1.f, 1.f, 1.f) * specular_light_intensity * material.getAlbedo()[1] +
+                        reflect_color * material.getAlbedo()[2] + refract_color * material.getAlbedo()[3];
         }
 };
 

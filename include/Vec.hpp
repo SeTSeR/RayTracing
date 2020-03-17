@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cmath>
+#include <optional>
 
 template<size_t size, typename T>
 class Vec {
@@ -44,6 +45,9 @@ public:
                 result -= other;
                 return result;
         };
+        Vec operator-() const {
+                return Vec() - *this;
+        };
         Vec operator*=(T coef) {
                 for (int i = 0; i < size; ++i) {
                         arr[i] *= coef;
@@ -70,8 +74,23 @@ public:
                 *this *= (T)1 / len;
                 return *this;
         }
-        Vec reflect(const Vec &norm) {
+        Vec reflect(const Vec &norm) const {
                 return *this - norm * 2. * (norm * *this);
+        }
+        std::optional<Vec> refract(const Vec &norm, T n1, T n2 = 1.0) const {
+                T c  = - *this * norm;
+                if (c < 0) {
+                        c = -c;
+                        T tmp = n1;
+                        n1 = n2;
+                        n2 = n1;
+                }
+                T r = n1 / n2;
+                T k = 1 - r * r * (1 - c * c);
+                if (k < 0) {
+                        return {};
+                }
+                return *this * r + norm * (r * c - std::sqrt(k));
         }
 };
 
