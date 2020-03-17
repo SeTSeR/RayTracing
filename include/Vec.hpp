@@ -14,8 +14,8 @@ public:
         template <typename ...Args,
                   typename = std::enable_if_t<
                       sizeof...(Args) == size &&
-                      (std::is_same_v<T, std::decay_t<Args>> && ...)>>
-        Vec(Args &&...args) : arr{std::forward<Args>(args)...} {};
+                      (std::is_convertible_v<T, std::decay_t<Args>> && ...)>>
+        Vec(Args &&...args) : arr{static_cast<T>(std::forward<Args>(args))...} {};
         T& operator[](int x) {
                 return arr[x];
         };
@@ -74,5 +74,8 @@ public:
                 return *this - norm * 2. * (norm * *this);
         }
 };
+
+template <typename Arg, typename ... Rest>
+Vec(Arg, Rest...) -> Vec<sizeof...(Rest) + 1, Arg>;
 
 #endif
