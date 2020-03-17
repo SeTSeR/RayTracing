@@ -1,7 +1,7 @@
 #ifndef __IMAGE_HPP__
 #define __IMAGE_HPP__
 
-#include "Vec3.hpp"
+#include "Vec.hpp"
 
 #include <filesystem>
 #include <vector>
@@ -10,14 +10,14 @@ class Image {
 private:
         int width;
         int height;
-        std::vector<Vec3<float>> buffer;
+        std::vector<Vec<3, float>> buffer;
         class Proxy {
                 int i;
                 int width;
-                std::vector<Vec3<float>> &buffer;
+                std::vector<Vec<3, float>> &buffer;
         public:
-                Proxy(int i, int width, std::vector<Vec3<float>> &buffer): i(i), width(width), buffer(buffer) {};
-                Vec3<float> &operator[](int j) {
+                Proxy(int i, int width, std::vector<Vec<3, float>> &buffer): i(i), width(width), buffer(buffer) {};
+                Vec<3, float> &operator[](int j) {
                         return buffer[i * width + j];
                 }
         };

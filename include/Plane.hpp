@@ -3,18 +3,18 @@
 
 #include "Material.hpp"
 #include "Shape.hpp"
-#include "Vec3.hpp"
+#include "Vec.hpp"
 
 template<typename T>
 class Plane: public Shape<T> {
 private:
-        Vec3<T> norm;
-        Vec3<T> point;
+        Vec<3, T> norm;
+        Vec<3, T> point;
         Material<T> material;
 public:
-  Plane(const Vec3<T> &norm, const Vec3<T> point, const Material<T> &material)
+        Plane(const Vec<3, T> &norm, const Vec<3, T> point, const Material<T> &material)
           : norm(norm), point(point), material(material){};
-        virtual bool intersects(const Vec3<T> &origin, const Vec3<T> &direction, T& distance)  const {
+        virtual bool intersects(const Vec<3, T> &origin, const Vec<3, T> &direction, T& distance)  const {
                 auto mp = direction * norm;
                 auto distvec = origin - point;
                 if (mp == 0) {
@@ -36,7 +36,7 @@ public:
         virtual const Material<T> &getMaterial() const {
                 return material;
         }
-        virtual Vec3<T> getNorm(const Vec3<T> &point) const {
+        virtual Vec<3, T> getNorm(const Vec<3, T> &point) const {
                 return norm;
         }
 };

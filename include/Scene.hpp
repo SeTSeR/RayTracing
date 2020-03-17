@@ -21,8 +21,8 @@ public:
         void addShape(std::unique_ptr<Shape<T>> shape) {
                 scene.push_back(std::move(shape));
         }
-        bool intersects(const Vec3<T> &origin, const Vec3<T> &direction,
-                        Vec3<T> &hit, Vec3<T> &norm, Material<T> &material) const {
+        bool intersects(const Vec<3, T> &origin, const Vec<3, T> &direction,
+                        Vec<3, T> &hit, Vec<3, T> &norm, Material<T> &material) const {
                 T dist = std::numeric_limits<T>::max();
                 for (auto &shape: scene) {
                         T figure_dist;
@@ -35,15 +35,24 @@ public:
                 }
                 return dist < 1000;
         }
-        Vec3<T> light_color(const Vec3<T> &point,
-                      const Vec3<T> &norm,
-                      const Material<T> &material) const {
+        Vec<3, T> light_color(const Vec<3, T> &point,
+                              const Vec<3, T> &direction,
+                              const Vec<3, T> &norm,
+                              const Material<T> &material) const {
                 T diffuse_light_intensity = {};
+                T specular_light_intensity = {};
                 for (const auto &light : lights) {
-                        Vec3<T> light_direction = (light.getPosition() - point).normalize();
-                        diffuse_light_intensity += light.getIntensity() * std::max(0.f, light_direction * norm);
+                        Vec light_direction = (light.getPosition() - point).normalize();
+                        Vec shadow_orig = light_direction * norm < 0 ? point - norm * 1e-3 : point + norm * 1e-3;
+                        Vec shadow_direction = (light.getPosition() - point).normalize();
+                        Material<T> mat;
+                        Vec<3, T> hit, n;
+                        if (!intersects(shadow_orig, shadow_direction, hit, n, mat)) {
+                                diffuse_light_intensity += light.getIntensity() * std::max(0.f, light_direction * norm);
+                                specular_light_intensity += light.getIntensity() * std::pow(std::max(0.f, light_direction.reflect(norm) * direction), material.getSpecularExponent());
+                        }
                 }
-                return material.getColor() * diffuse_light_intensity;
+                return material.getDiffuseColor() * diffuse_light_intensity * material.getAlbedo()[0] + Vec<3, float>(1.f, 1.f, 1.f) * specular_light_intensity * material.getAlbedo()[1];
         }
 };
 

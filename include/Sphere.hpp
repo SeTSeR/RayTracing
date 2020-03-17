@@ -3,18 +3,18 @@
 
 #include "Material.hpp"
 #include "Shape.hpp"
-#include "Vec3.hpp"
+#include "Vec.hpp"
 
 template<typename T>
 class Sphere: public Shape<T> {
 private:
-        Vec3<T> center;
+        Vec<3, T> center;
         T radius;
         Material<T> material;
 public:
         using coord_type = T;
-        Sphere(const Vec3<T> &center, T radius, Material<T> &&material): center(center), radius(radius), material(material) {};
-        virtual bool intersects(const Vec3<T> &origin, const Vec3<T> &direction, T& distance) const {
+        Sphere(const Vec<3, T> &center, T radius, Material<T> &&material): center(center), radius(radius), material(material) {};
+        virtual bool intersects(const Vec<3, T> &origin, const Vec<3, T> &direction, T& distance) const {
                 if (direction.length() == 0) {
                         return false;
                 }
@@ -42,7 +42,7 @@ public:
                 return material;
         }
 
-        virtual Vec3<T> getNorm(const Vec3<T> &point) const {
+        virtual Vec<3, T> getNorm(const Vec<3, T> &point) const {
                 return (point - center).normalize();
         }
 
