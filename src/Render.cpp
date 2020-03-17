@@ -33,8 +33,8 @@ Vec<3, float> cast_ray(const Vec<3, float> &origin, const Vec<3, float> &directi
         }
 }
 
-void render(int width, int height, const std::filesystem::path &path) {
-        Image framebuffer(width, height);
+void render(const Config &config) {
+        Image framebuffer(config.width, config.height);
 
         float fov = M_PI/2;
         Scene<float> scene;
@@ -47,13 +47,13 @@ void render(int width, int height, const std::filesystem::path &path) {
         scene.addLight(Light(Vec(30.f, 50, -25), 1.8f));
         scene.addLight(Light(Vec(30.f, 20, 30), 1.7f));
         
-        for (size_t j = 0; j < height; ++j) {
-                for (size_t i = 0; i < width; ++i) {
+        for (size_t j = 0; j < config.height; ++j) {
+                for (size_t i = 0; i < config.width; ++i) {
                         Vec<3, float> cell_color = {};
                         for (size_t k = 0; k < SAMPLES_COUNT; ++k) {
                                 for (size_t l = 0; l < SAMPLES_COUNT; ++l) {
-                                        float x = (2*(i*SAMPLES_COUNT + k + 0.5)/(float)(width*SAMPLES_COUNT) - 1)*tan(fov/2.)*width/(float)height;
-                                        float y = -(2*(j*SAMPLES_COUNT + l + 0.5)/(float)(height*SAMPLES_COUNT) - 1)*tan(fov/2.);
+                                        float x = (2*(i*SAMPLES_COUNT + k + 0.5)/(float)(config.width*SAMPLES_COUNT) - 1)*tan(fov/2.)*config.width/(float)config.height;
+                                        float y = -(2*(j*SAMPLES_COUNT + l + 0.5)/(float)(config.height*SAMPLES_COUNT) - 1)*tan(fov/2.);
                                         Vec<3, float> dir = Vec(x, y, -1).normalize();
                                         cell_color += cast_ray(Vec(0.f, 0, 0), dir, scene);
                                 }
@@ -64,5 +64,5 @@ void render(int width, int height, const std::filesystem::path &path) {
                 }
         }
 
-        framebuffer.write_png(path);
+        framebuffer.write_png(config.output_path);
 }

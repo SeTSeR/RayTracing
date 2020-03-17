@@ -1,6 +1,14 @@
 #include "Render.hpp"
 
-int main() {
-        render(1024, 768, "out.png");
+#include <iostream>
+
+int main(int argc, char* argv[]) {
+        auto config = parse_args(argc, argv);
+        if (config) {
+                render(*config);
+        } else {
+                std::cout << "Usage:" << std::endl;
+                std::cout << "RayTracing -out <output_path> -scene <scene_number> [-threads <threads_number> -background <background_image_path>]" << std::endl;
+        }
         return 0;
 }

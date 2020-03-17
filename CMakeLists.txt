@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 
-add_library(Render src/Render.cpp src/Image.cpp)
+add_library(Render src/Render.cpp src/Image.cpp src/Config.cpp)
 
 add_executable(RayTracing src/main.cpp)
 
