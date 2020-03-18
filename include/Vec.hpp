@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <optional>
+#include <ostream>
 
 template<size_t size, typename T>
 class Vec {
@@ -91,6 +92,12 @@ public:
                         return {};
                 }
                 return *this * r + norm * (r * c - std::sqrt(k));
+        }
+        friend std::ostream& operator<<(std::ostream& os, const Vec& v) {
+                for (const auto &elem: v.arr) {
+                        os << elem << " ";
+                }
+                return os;
         }
 };
 
