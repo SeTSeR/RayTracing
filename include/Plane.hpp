@@ -26,9 +26,8 @@ public:
                         }
                 }
                 auto t = (point - origin) * norm/mp;
-                auto hitpoint = origin + direction * t;
                 if (t >= 0) {
-                        distance = (hitpoint - origin).length();
+                        distance = t;
                         return true;
                 }
                 return false;

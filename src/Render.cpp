@@ -84,7 +84,7 @@ void render(const Config &config) {
                                 for (size_t l = 0; l < SAMPLES_COUNT; ++l) {
                                         float x = (2*(i*SAMPLES_COUNT + k + 0.5)/(float)(config.width*SAMPLES_COUNT) - 1)*tan(fov/2.)*config.width/(float)config.height;
                                         float y = -(2*(j*SAMPLES_COUNT + l + 0.5)/(float)(config.height*SAMPLES_COUNT) - 1)*tan(fov/2.);
-                                        Vec<3, float> dir = Vec(x, y, -1).normalize();
+                                        Vec dir = Vec(x, y, -1).normalize();
                                         cell_color += cast_ray(Vec(0.f, 0, 0), dir, scenes[config.scene_num - 1], background[j][i]);
                                 }
                         }

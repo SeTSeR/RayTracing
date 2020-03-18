@@ -27,5 +27,5 @@ std::optional<Config> parse_args(int argc, char* argv[]) {
         if (out_met && scene_met) {
                 return config;
         }
-        return {};
+        return std::nullopt;
 }

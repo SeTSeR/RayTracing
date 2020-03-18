@@ -89,7 +89,7 @@ public:
                 T r = n1 / n2;
                 T k = 1 - r * r * (1 - c * c);
                 if (k < 0) {
-                        return {};
+                        return std::nullopt;
                 }
                 return *this * r + norm * (r * c - std::sqrt(k));
         }
