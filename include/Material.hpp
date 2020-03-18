@@ -38,6 +38,9 @@ public:
         static Material<T> mirror() {
                 return Material(Vec((T)1.0, 1.0, 1.0), Vec((T)0.0, 10.0, 0.8, 0.0), 1425., 1.0);
         }
+        static Material<T> medium_gray() {
+                return Material(Vec((T)0.454902f, 0.454902, 0.454902), Vec((T)0.8, 0.1, 0.1, 0.0), 12.8, 1.0);
+        }
 };
 
 #endif

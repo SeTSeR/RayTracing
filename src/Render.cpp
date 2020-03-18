@@ -26,6 +26,15 @@ void build_scenes() {
         scene.addLight(Light(Vec(30.f, 50, -25), 1.8f));
         scene.addLight(Light(Vec(30.f, 20, 30), 1.7f));
         scenes.push_back(std::move(scene));
+
+        Scene<float> scene2;
+        scene2.addShape(std::make_unique<Plane<float>>(Vec(0.f, 1, 0), Vec(0.f, 0, 0), Material<float>::medium_gray()));
+        scene2.addShape(std::make_unique<Plane<float>>(Vec(1.f, 0, 0), Vec(0.f, 256, -256), Material<float>::medium_gray()));
+        scene2.addShape(std::make_unique<Plane<float>>(Vec(-1.f, 0, 0), Vec(512.f, 256, -256), Material<float>::medium_gray()));
+        scene2.addShape(std::make_unique<Plane<float>>(Vec(0.f, -1, 0), Vec(0.f, 512, 0), Material<float>::medium_gray()));
+        scene2.addShape(std::make_unique<Plane<float>>(Vec(0.f, 0, 1), Vec(256.f, 256, -512), Material<float>::medium_gray()));
+        scene2.addLight(Light(Vec(256.f, 256, -100), 30.f));
+        scenes.push_back(std::move(scene2));
 }
 
 Vec<3, float> cast_ray(const Vec<3, float> &origin, const Vec<3, float> &direction, const Scene<float> &scene, const Vec<3, float> &default_color, int depth = 0) {
