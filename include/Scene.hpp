@@ -45,17 +45,18 @@ public:
                 T specular_light_intensity = {};
                 for (const auto &light : lights) {
                         Vec light_direction = (light.getPosition() - point).normalize();
+                        auto light_distance = (light.getPosition() - point).length();
                         Vec shadow_orig = light_direction * norm < 0 ? point - norm * 1e-3 : point + norm * 1e-3;
-                        Vec shadow_direction = (light.getPosition() - point).normalize();
+                        Vec shadow_direction = light_direction;
                         Material<T> mat;
                         Vec<3, T> hit, n;
-                        if (!intersects(shadow_orig, shadow_direction, hit, n, mat)) {
+                        if (!intersects(shadow_orig, shadow_direction, hit, n, mat) || (hit - shadow_orig).length() >= light_distance) {
                                 diffuse_light_intensity += light.getIntensity() * std::max(0.f, light_direction * norm);
                                 specular_light_intensity += light.getIntensity() * std::pow(std::max(0.f, light_direction.reflect(norm) * direction), material.getSpecularExponent());
                         }
                 }
                 return material.getDiffuseColor() * diffuse_light_intensity * material.getAlbedo()[0] +
-                        Vec<3, float>(1.f, 1.f, 1.f) * specular_light_intensity * material.getAlbedo()[1] +
+                        Vec(1.f, 1, 1) * specular_light_intensity * material.getAlbedo()[1] +
                         reflect_color * material.getAlbedo()[2] + refract_color * material.getAlbedo()[3];
         }
 };
