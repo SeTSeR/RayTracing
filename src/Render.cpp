@@ -10,12 +10,7 @@
 #include <memory>
 #include <vector>
 
-constexpr int MAX_DEPTH = 4;
-constexpr int SAMPLES_COUNT = 2;
-
-std::vector<Scene<float>> scenes;
-
-void build_scenes() {
+Render::Render() {
         Scene<float> scene;
         scene.addShape(std::make_unique<Sphere<float>>(Vec(-3.f, 0, -16), 2.f, Material<float>::ivory()));
         scene.addShape(std::make_unique<Sphere<float>>(Vec(-1.f, -1.5, -12), 2.f, Material<float>::glass()));
@@ -41,7 +36,7 @@ void build_scenes() {
         scenes.push_back(std::move(scene2));
 }
 
-Vec<3, float> cast_ray(const Vec<3, float> &origin, const Vec<3, float> &direction, const Scene<float> &scene, const Vec<3, float> &default_color, int depth = 0) {
+Vec<3, float> Render::castRay(const Vec<3, float> &origin, const Vec<3, float> &direction, const Scene<float> &scene, const Vec<3, float> &default_color, int depth) {
         Vec<3, float> point, norm;
         Material<float> material;
         if (depth > MAX_DEPTH || !scene.intersects(origin, direction, point, norm, material)) {
@@ -49,21 +44,32 @@ Vec<3, float> cast_ray(const Vec<3, float> &origin, const Vec<3, float> &directi
         }
         Vec reflect_direction = direction.reflect(norm).normalize();
         Vec reflect_origin = reflect_direction * norm < 0 ? point - norm * 1e-3 : point + norm * 1e-3;
-        Vec reflect_color = cast_ray(reflect_origin, reflect_direction, scene, default_color, depth + 1);
+        Vec reflect_color = castRay(reflect_origin, reflect_direction, scene, default_color, depth + 1);
 
         std::optional refract_direction = direction.refract(norm, material.getRefractiveIndex())->normalize();
         if (refract_direction) {
                 Vec refract_origin = *refract_direction * norm < 0 ? point - norm * 1e-3 : point + norm * 1e-3;
-                Vec refract_color = cast_ray(refract_origin, *refract_direction, scene, default_color, depth + 1);
+                Vec refract_color = castRay(refract_origin, *refract_direction, scene, default_color, depth + 1);
                 return scene.light_color(point, direction, norm, material, reflect_color, refract_color);
         } else {
                 return scene.light_color(point, direction, norm, material, reflect_color, Vec(0.f, 0, 0));
         }
 }
 
-void render(const Config &config) {
-        build_scenes();
+Vec<3, float> Render::tracePath(const Vec<3, float> &origin, const Vec<3, float> &direction, const Scene<float> &scene, const Vec<3, float> &default_color) {
+        int depth = 0;
+        while (depth < MAX_DEPTH) {
+                Vec<3, float> hit, norm;
+                Material<float> material;
+                if (!scene.intersects(origin, direction, hit, norm, material)) {
+                        return default_color;
+                }
+                ++depth;
+        }
+        return default_color;
+}
 
+void Render::renderImage(const Config &config) {
         Image framebuffer(config.width, config.height);
         Image background(config.width, config.height);
 
