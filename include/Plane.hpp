@@ -12,7 +12,8 @@ private:
         Vec<3, T> point;
         Material<T> material;
 public:
-        Plane(const Vec<3, T> &norm, const Vec<3, T> point, const Material<T> &material)
+        Plane(): norm(), point(), material() {};
+        Plane(const Vec<3, T> &norm, const Vec<3, T> &point, const Material<T> &material)
           : norm(norm), point(point), material(material){};
         virtual bool intersects(const Vec<3, T> &origin, const Vec<3, T> &direction, T& distance)  const {
                 auto mp = direction * norm;
@@ -37,6 +38,9 @@ public:
         }
         virtual Vec<3, T> getNorm(const Vec<3, T> &point) const {
                 return norm;
+        }
+        bool contains(const Vec<3, T> &point) const {
+                return (this->point - point) * norm == 0;
         }
 };
 
