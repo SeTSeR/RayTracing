@@ -12,6 +12,12 @@ add_executable(RayTracing src/main.cpp)
 
 target_link_libraries(RayTracing PUBLIC Render)
 
+find_package(OpenMP)
+
+if (OpenMP_CXX_FOUND)
+   target_link_libraries(RayTracing PUBLIC OpenMP::OpenMP_CXX)
+endif()
+
 target_include_directories(Render PUBLIC
                                       "${PROJECT_SOURCE_DIR}/include"
                                       )

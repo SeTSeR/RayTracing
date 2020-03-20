@@ -86,7 +86,8 @@ void Render::renderImage(const Config &config) {
                         }
                 }
         }
-        
+
+#pragma omp parallel for shedule(dynamic, 1);
         for (size_t j = 0; j < config.height; ++j) {
                 for (size_t i = 0; i < config.width; ++i) {
                         Vec<3, float> cell_color = {};
