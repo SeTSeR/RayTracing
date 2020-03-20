@@ -81,12 +81,12 @@ Vec<3, float> Render::tracePath(const Ray<float> &ray, const Scene<float> &scene
         
         float r1 = dis(gen);
         float r2 = dis(gen);
-        Ray<float> newRay(point, Vec<3, float>::unitVecInHemisphere(norm, r1, r2));
+        Ray<float> newRay(point, Vec<3, float>::cosineVecInHemisphere(norm, r1, r2));
         float cos = newRay.direction * norm;
         Vec BRDF = (1 / M_PI) * material.getDiffuseColor();
-        float PDF = 1. / M_PI;
+        float PDF = cos / M_PI;
         Vec indirectLightning = ((cos / PDF) * BRDF).mult(tracePath(newRay, scene, default_color, depth + 1));
-        return (directLightning / M_PI + indirectLightning);
+        return (directLightning / M_PI + indirectLightning) * material.getAlbedo()[0];
 }
 
 void Render::renderImage(const Config &config) {
