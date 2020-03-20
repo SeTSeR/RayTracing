@@ -9,6 +9,8 @@
 #include <memory>
 #include <vector>
 
+#include <omp.h>
+
 Render::Render() {
         Scene<float> scene;
         scene.addShape(std::make_unique<Sphere<float>>(Vec(-3.f, 0, -16), 2.f, Material<float>::ivory()));
@@ -111,7 +113,11 @@ void Render::renderImage(const Config &config) {
                 }
         }
 
-#pragma omp parallel for shedule(dynamic, 1);
+        if (config.threads_num) {
+                omp_set_num_threads(*config.threads_num);
+        }
+
+#pragma omp parallel for shedule(dynamic);
         for (size_t j = 0; j < config.height; ++j) {
                 for (size_t i = 0; i < config.width; ++i) {
                         Vec<3, float> cell_color = {};
