@@ -56,12 +56,12 @@ public:
         virtual const Material<T> &getMaterial() const {
                 return material;
         }
-        virtual bool intersects(const Vec<3, T> &origin, const Vec<3, T> &direction, T& distance) const {
+        virtual bool intersects(const Ray<T> &ray, T& distance) const {
                 T margin_distance = std::numeric_limits<T>::infinity();
                 bool intersects_any = false;
                 for (const auto &margin: margins) {
                         T dist = {};
-                        if (margin.intersects(origin, direction, dist) && dist < margin_distance) {
+                        if (margin.intersects(ray, dist) && dist < margin_distance) {
                                 intersects_any = true;
                                 margin_distance = dist;
                         }

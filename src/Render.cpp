@@ -2,7 +2,6 @@
 #include "Material.hpp"
 #include "Plane.hpp"
 #include "Render.hpp"
-#include "Scene.hpp"
 #include "Sphere.hpp"
 #include "Vec.hpp"
 
@@ -36,37 +35,36 @@ Render::Render() {
         scenes.push_back(std::move(scene2));
 }
 
-Vec<3, float> Render::castRay(const Vec<3, float> &origin, const Vec<3, float> &direction, const Scene<float> &scene, const Vec<3, float> &default_color, int depth) {
+Vec<3, float> Render::castRay(const Ray<float> &ray, const Scene<float> &scene, const Vec<3, float> &default_color, int depth) {
         Vec<3, float> point, norm;
         Material<float> material;
-        if (depth > MAX_DEPTH || !scene.intersects(origin, direction, point, norm, material)) {
+        if (depth > MAX_DEPTH || !scene.intersects(ray, point, norm, material)) {
                 return default_color;
         }
-        Vec reflect_direction = direction.reflect(norm).normalize();
+        Vec reflect_direction = ray.direction.reflect(norm).normalize();
         Vec reflect_origin = reflect_direction * norm < 0 ? point - norm * 1e-3 : point + norm * 1e-3;
-        Vec reflect_color = castRay(reflect_origin, reflect_direction, scene, default_color, depth + 1);
+        Vec reflect_color = castRay(Ray(reflect_origin, reflect_direction), scene, default_color, depth + 1);
 
-        std::optional refract_direction = direction.refract(norm, material.getRefractiveIndex())->normalize();
+        std::optional refract_direction = ray.direction.refract(norm, material.getRefractiveIndex())->normalize();
         if (refract_direction) {
                 Vec refract_origin = *refract_direction * norm < 0 ? point - norm * 1e-3 : point + norm * 1e-3;
-                Vec refract_color = castRay(refract_origin, *refract_direction, scene, default_color, depth + 1);
-                return scene.light_color(point, direction, norm, material, reflect_color, refract_color);
+                Vec refract_color = castRay(Ray(refract_origin, *refract_direction), scene, default_color, depth + 1);
+                return scene.light_color(point, ray.direction, norm, material, reflect_color, refract_color);
         } else {
-                return scene.light_color(point, direction, norm, material, reflect_color, Vec(0.f, 0, 0));
+                return scene.light_color(point, ray.direction, norm, material, reflect_color, Vec(0.f, 0, 0));
         }
 }
 
-Vec<3, float> Render::tracePath(const Vec<3, float> &origin, const Vec<3, float> &direction, const Scene<float> &scene, const Vec<3, float> &default_color) {
-        int depth = 0;
+Vec<3, float> Render::tracePath(const Ray<float> &ray, const Scene<float> &scene, int depth) {
         while (depth < MAX_DEPTH) {
                 Vec<3, float> hit, norm;
                 Material<float> material;
-                if (!scene.intersects(origin, direction, hit, norm, material)) {
-                        return default_color;
+                if (!scene.intersects(ray, hit, norm, material)) {
+                        return Vec<3, float>();
                 }
                 ++depth;
         }
-        return default_color;
+        return Vec<3, float>();
 }
 
 void Render::renderImage(const Config &config) {
@@ -96,7 +94,7 @@ void Render::renderImage(const Config &config) {
                                         float x = (2*(i*SAMPLES_COUNT + k + 0.5)/(float)(config.width*SAMPLES_COUNT) - 1)*tan(fov/2.)*config.width/(float)config.height;
                                         float y = -(2*(j*SAMPLES_COUNT + l + 0.5)/(float)(config.height*SAMPLES_COUNT) - 1)*tan(fov/2.);
                                         Vec dir = Vec(x, y, -1).normalize();
-                                        cell_color += castRay(Vec(0.f, 0, 0), dir, scenes[config.scene_num - 1], background[j][i]);
+                                        cell_color += castRay(Ray(Vec(0.f, 0, 0), dir), scenes[config.scene_num - 1], background[j][i]);
                                 }
                         }
                         framebuffer[j][i] = cell_color * (1.f/(SAMPLES_COUNT*SAMPLES_COUNT));

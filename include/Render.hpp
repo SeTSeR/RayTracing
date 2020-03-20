@@ -2,6 +2,7 @@
 #define __RENDER_HPP__
 
 #include "Config.hpp"
+#include "Ray.hpp"
 #include "Scene.hpp"
 #include "Vec.hpp"
 
@@ -17,8 +18,8 @@ private:
               RAY_TRACER = 0,
               PATH_TRACER = 1,
         } render_mode;
-        Vec<3, float> castRay(const Vec<3, float>&, const Vec<3, float>&, const Scene<float>&, const Vec<3, float>&, int depth = 0);
-        Vec<3, float> tracePath(const Vec<3, float>&, const Vec<3, float>&, const Scene<float>&, const Vec<3, float>&);
+        Vec<3, float> castRay(const Ray<float>&, const Scene<float>&, const Vec<3, float>&, int depth = 0);
+        Vec<3, float> tracePath(const Ray<float>&, const Scene<float>&, int depth = 0);
 public:
         Render();
         void renderImage(const Config &config);

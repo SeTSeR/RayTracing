@@ -15,9 +15,9 @@ public:
         Plane(): norm(), point(), material() {};
         Plane(const Vec<3, T> &norm, const Vec<3, T> &point, const Material<T> &material)
           : norm(norm), point(point), material(material){};
-        virtual bool intersects(const Vec<3, T> &origin, const Vec<3, T> &direction, T& distance)  const {
-                auto mp = direction * norm;
-                auto distvec = origin - point;
+        virtual bool intersects(const Ray<T> &ray, T& distance)  const {
+                auto mp = ray.direction * norm;
+                auto distvec = ray.origin - point;
                 if (mp == 0) {
                         if (distvec * norm == 0) {
                                 distance = 0;
@@ -26,7 +26,7 @@ public:
                                 return false;
                         }
                 }
-                auto t = (point - origin) * norm/mp;
+                auto t = -distvec * norm/mp;
                 if (t >= 0) {
                         distance = t;
                         return true;

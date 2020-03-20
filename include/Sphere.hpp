@@ -14,12 +14,12 @@ private:
 public:
         using coord_type = T;
         Sphere(const Vec<3, T> &center, T radius, Material<T> &&material): center(center), radius(radius), material(material) {};
-        virtual bool intersects(const Vec<3, T> &origin, const Vec<3, T> &direction, T& distance) const {
-                if (direction.length() == 0) {
+        virtual bool intersects(const Ray<T> &ray, T& distance) const {
+                if (ray.direction.length() == 0) {
                         return false;
                 }
-                auto v = center - origin;
-                auto mult = v * direction;
+                auto v = center - ray.origin;
+                auto mult = v * ray.direction;
                 auto distance2 = v*v - mult*mult;
                 if (distance2 > radius * radius) {
                         return false;

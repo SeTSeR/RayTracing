@@ -2,6 +2,7 @@
 #define _SCENE_HPP_
 
 #include "Light.hpp"
+#include "Ray.hpp"
 #include "Shape.hpp"
 
 #include <algorithm>
@@ -21,14 +22,13 @@ public:
         void addShape(std::unique_ptr<Shape<T>> shape) {
                 scene.push_back(std::move(shape));
         }
-        bool intersects(const Vec<3, T> &origin, const Vec<3, T> &direction,
-                        Vec<3, T> &hit, Vec<3, T> &norm, Material<T> &material) const {
+        bool intersects(const Ray<T> &ray, Vec<3, T> &hit, Vec<3, T> &norm, Material<T> &material) const {
                 T dist = std::numeric_limits<T>::max();
                 for (auto &shape: scene) {
                         T figure_dist;
-                        if (shape->intersects(origin, direction, figure_dist) && figure_dist < dist) {
+                        if (shape->intersects(ray, figure_dist) && figure_dist < dist) {
                                 dist = figure_dist;
-                                hit = origin + direction * figure_dist;
+                                hit = ray.origin + ray.direction * figure_dist;
                                 norm = shape->getNorm(hit);
                                 material = shape->getMaterial();
                         }
@@ -50,7 +50,7 @@ public:
                         Vec shadow_direction = light_direction;
                         Material<T> mat;
                         Vec<3, T> hit, n;
-                        if (!intersects(shadow_orig, shadow_direction, hit, n, mat) || (hit - shadow_orig).length() >= light_distance) {
+                        if (!intersects(Ray(shadow_orig, shadow_direction), hit, n, mat) || (hit - shadow_orig).length() >= light_distance) {
                                 diffuse_light_intensity += light.getIntensity() * std::max(0.f, light_direction * norm);
                                 specular_light_intensity += light.getIntensity() * std::pow(std::max(0.f, light_direction.reflect(norm) * direction), material.getSpecularExponent());
                         }
