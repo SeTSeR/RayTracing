@@ -1,6 +1,7 @@
 #ifndef __VEC3_HPP__
 #define __VEC3_HPP__
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <optional>
@@ -10,6 +11,7 @@ template<size_t size, typename T>
 class Vec {
 private:
         std::array<T, size> arr;
+        Vec(const std::array<T, size> &arr): arr(arr) {};
 public:
         using coord_type = T;
         Vec(): arr({}) {};
@@ -76,6 +78,11 @@ public:
                         result.arr[i] *= other.arr[i];
                 }
                 return result;
+        };
+        Vec sqrt() const {
+                std::array<T, size> new_arr;
+                std::transform(arr.begin(), arr.end(), new_arr.begin(), [](T x) -> T { return std::sqrt(x); });
+                return Vec(new_arr);
         };
         T length() const {
                 return std::sqrt(*this * *this);
