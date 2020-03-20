@@ -67,26 +67,50 @@ Vec<3, float> Render::tracePath(const Ray<float> &ray, const Scene<float> &scene
                 return default_color;
         }
 
-        Vec<3, float> directLightning = {};
-        for (const auto &light: scene.getLights()) {
-                Vec light_direction = (light.getPosition() - point).normalize();
-                auto light_distance = (light.getPosition() - point).length();
-                Vec shadow_orig = light_direction * norm < 0 ? point - norm * 1e-3 : point + norm * 1e-3;
-                Material<float> mat;
-                Vec<3, float> hit, n;
-                if (!scene.intersects(Ray(shadow_orig, light_direction), hit, n, mat) || (hit - shadow_orig).length() >= light_distance) {
-                        directLightning += light.getIntensity() * std::max(0.f, light_direction * norm) * material.getDiffuseColor();
-                }
-        }
-        
+        Vec<3, float> directLighting = {};
+        Vec<3, float> indirectLighting;
+        float Sigma = material.getAlbedo() * Vec(1.f, 1, 1, 1);
+        float xi = dis(gen);
         float r1 = dis(gen);
         float r2 = dis(gen);
-        Ray<float> newRay(point, Vec<3, float>::cosineVecInHemisphere(norm, r1, r2));
-        float cos = newRay.direction * norm;
-        Vec BRDF = (1 / M_PI) * material.getDiffuseColor();
-        float PDF = cos / M_PI;
-        Vec indirectLightning = ((cos / PDF) * BRDF).mult(tracePath(newRay, scene, default_color, depth + 1));
-        return (directLightning / M_PI + indirectLightning) * material.getAlbedo()[0];
+        Vec<3, float> BRDF;
+        float PDF;
+        Ray<float> newRay;
+        float cos;
+        if (xi <= material.getAlbedo()[0] / Sigma) {
+                for (const auto &light: scene.getLights()) {
+                        Vec light_direction = (light.getPosition() - point).normalize();
+                        auto light_distance = (light.getPosition() - point).length();
+                        Vec shadow_orig = light_direction * norm < 0 ? point - norm * 1e-3 : point + norm * 1e-3;
+                        Material<float> mat;
+                        Vec<3, float> hit, n;
+                        if (!scene.intersects(Ray(shadow_orig, light_direction), hit, n, mat) || (hit - shadow_orig).length() >= light_distance) {
+                                directLighting += light.getIntensity() * std::max(0.f, light_direction * norm) * material.getDiffuseColor();
+                        }
+                }
+                
+                newRay = Ray<float>(point, Vec<3, float>::cosineVecInHemisphere(norm, r1, r2));
+                cos = newRay.direction * norm;
+                BRDF = (1 / M_PI) * Vec(1.f, 1, 1);
+                PDF = cos / M_PI;
+        } else if (xi <= (material.getAlbedo()[0] + material.getAlbedo()[1] + material.getAlbedo()[2]) / Sigma) {
+                Vec reflect_direction = ray.direction.reflect(norm).normalize();
+                Vec new_direction = Vec<3, float>::fixedPhongVec(r1, r2, material.getSpecularExponent());
+                newRay = Ray<float>(point, new_direction);
+                cos = new_direction * norm;
+                BRDF = (material.getSpecularExponent() + 2) / (2 * M_PI) * std::pow(cos, material.getSpecularExponent()) * Vec(1.f, 1, 1);
+                PDF = (material.getSpecularExponent() + 1) / (2 * M_PI) * std::pow(cos, material.getSpecularExponent());
+        } else {
+                std::optional refract_direction = ray.direction.refract(norm, material.getRefractiveIndex())->normalize();
+                if (refract_direction) {
+                        newRay = Ray<float>(point, Vec<3, float>::cosineVecInHemisphere(*refract_direction, r1, r2));
+                        cos = newRay.direction * norm;
+                        BRDF = (1 / M_PI) * Vec(1.f, 1, 1);
+                        PDF = cos / M_PI;
+                } else return default_color;
+        }
+        indirectLighting = ((cos / PDF) * BRDF).mult(tracePath(newRay, scene, default_color, depth + 1));
+        return (directLighting / M_PI + indirectLighting);
 }
 
 void Render::renderImage(const Config &config) {
@@ -135,7 +159,7 @@ void Render::renderImage(const Config &config) {
                                 float x = (2*(i + 0.5)/(float)config.width - 1)*tan(fov/2.)*config.width/(float)config.height;
                                 float y = -(2*(j + 0.5)/(float)config.height - 1)*tan(fov/2.);
                                 Vec<3, float> dir = Vec(x, y, -1).normalize();
-                                const float desired_error = 0.25;
+                                const float desired_error = 0.5;
                                 Vec<3, float> err(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
                                 Vec<3, float> sum_color = {};
                                 Vec<3, float> sum_sq_color = {};

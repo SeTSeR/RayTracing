@@ -104,13 +104,20 @@ public:
         }
         static Vec cosineVecInHemisphere(const Vec &norm, T r1, T r2) {
                 static_assert(size == 3);
-                T e = 1;
+                T exponent = 1;
                 T phi = 2 * M_PI * r1;
-                T cosTheta = std::pow(1 - r2, 1./(e + 1.));
+                T cosTheta = std::pow(1 - r2, 1./(exponent + 1.));
                 T sinTheta = std::sqrt(1 - cosTheta * cosTheta);
                 return Vec<3, float>(sinTheta * std::cos(phi),
                                      cosTheta * std::sin(phi),
                                      cosTheta).normalize();
+        }
+        static Vec fixedPhongVec(T xi1, T xi2, T e) {
+                static_assert(size == 3);
+                T h = std::sqrt(1 - std::pow(xi1, 2./(e + 1)));
+                return Vec<3, float>(h * std::cos(2 * M_PI * xi2),
+                                     h * std::sin(2 * M_PI * xi2),
+                                     std::pow(xi1, 1./(e + 1)));
         }
         std::optional<Vec> refract(const Vec &norm, T n1, T n2 = 1.0) const {
                 T c  = - *this * norm;
@@ -135,6 +142,31 @@ public:
         }
         friend Vec operator*(T r, const Vec& v) {
                 return v * r;
+        }
+        static std::pair<Vec<3, T>, Vec<3, T>> genOrthogonal(const Vec<3, T> &norm) {
+                int imax = 0;
+                T cmax = {};
+                std::pair<Vec<3, T>, Vec<3, T>> norms;
+                for (int i = 0; i < 3; ++i) {
+                        if (std::abs(norm[i]) > std::abs(cmax)) {
+                                cmax = norm[i];
+                                imax = i;
+                        }
+                }
+                switch (imax) {
+                case 0:
+                        norms = std::pair(Vec<3, T>(-norm[2], 0, norm[0]), Vec<3, T>(-norm[1], norm[0], 0));
+                        break;
+                case 1:
+                        norms = std::pair(Vec<3, T>(0, -norm[2], norm[1]), Vec<3, T>(-norm[1], norm[0], 0));
+                        break;
+                case 2:
+                        norms = std::pair(Vec<3, T>(-norm[2], 0, norm[0]), Vec<3, T>(0, -norm[2], norm[1]));
+                        break;
+                }
+                norms.first = (norms.first - norm * (norms.first * norm)).normalize();
+                norms.second = (norms.second - norm * (norms.second * norm) - norms.first * (norms.second * norms.first)).normalize();
+                return norms;
         }
 };
 
