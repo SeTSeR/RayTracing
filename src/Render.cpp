@@ -67,7 +67,7 @@ Vec<3, float> Render::tracePath(const Ray<float> &ray, const Scene<float> &scene
                 return default_color;
         }
 
-        Vec<3, float> directLightning = {};
+        Vec<3, float> directLighting = {};
         for (const auto &light: scene.getLights()) {
                 Vec light_direction = (light.getPosition() - point).normalize();
                 auto light_distance = (light.getPosition() - point).length();
@@ -75,7 +75,7 @@ Vec<3, float> Render::tracePath(const Ray<float> &ray, const Scene<float> &scene
                 Material<float> mat;
                 Vec<3, float> hit, n;
                 if (!scene.intersects(Ray(shadow_orig, light_direction), hit, n, mat) || (hit - shadow_orig).length() >= light_distance) {
-                        directLightning += light.getIntensity() * std::max(0.f, light_direction * norm) * material.getDiffuseColor();
+                        directLighting += light.getIntensity() * std::max(0.f, light_direction * norm) * material.getDiffuseColor();
                 }
         }
         
@@ -85,8 +85,8 @@ Vec<3, float> Render::tracePath(const Ray<float> &ray, const Scene<float> &scene
         float cos = newRay.direction * norm;
         Vec BRDF = (1 / M_PI) * material.getDiffuseColor();
         float PDF = cos / M_PI;
-        Vec indirectLightning = ((cos / PDF) * BRDF).mult(tracePath(newRay, scene, default_color, depth + 1));
-        return (directLightning / M_PI + indirectLightning) * material.getAlbedo()[0];
+        Vec indirectLighting = ((cos / PDF) * BRDF).mult(tracePath(newRay, scene, default_color, depth + 1));
+        return (directLighting / M_PI + indirectLighting) * material.getAlbedo()[0];
 }
 
 void Render::renderImage(const Config &config) {
