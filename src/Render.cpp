@@ -86,7 +86,7 @@ Vec<3, float> Render::tracePath(const Ray<float> &ray, const Scene<float> &scene
         Vec BRDF = (1 / M_PI) * material.getDiffuseColor();
         float PDF = cos / M_PI;
         Vec indirectLighting = ((cos / PDF) * BRDF).mult(tracePath(newRay, scene, default_color, depth + 1));
-        return (directLighting / M_PI + indirectLighting) * material.getAlbedo()[0];
+        return (directLighting / M_PI + indirectLighting);
 }
 
 void Render::renderImage(const Config &config) {
@@ -132,23 +132,29 @@ void Render::renderImage(const Config &config) {
                                 }
                                 cell_color *= (1.f / (SAMPLES_COUNT * SAMPLES_COUNT));
                         } else {
-                                float x = (2*(i + 0.5)/(float)config.width - 1)*tan(fov/2.)*config.width/(float)config.height;
-                                float y = -(2*(j + 0.5)/(float)config.height - 1)*tan(fov/2.);
-                                Vec<3, float> dir = Vec(x, y, -1).normalize();
-                                const float desired_error = 0.25;
-                                Vec<3, float> err(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
-                                Vec<3, float> sum_color = {};
-                                Vec<3, float> sum_sq_color = {};
-                                int i = 0;
-                                while (err.length() >= desired_error) {
-                                        cell_color = ((float)i / (i + 1)) * cell_color + (1. / (i + 1)) * tracePath(Ray(Vec(0.f, 0, 0), dir), scenes[config.scene_num - 1], background[j][i]);
-                                        if (i > 10) {
-                                                sum_color += cell_color;
-                                                sum_sq_color += cell_color.mult(cell_color);
-                                                auto avg = sum_color / (i + 1.f);
-                                                err = (sum_sq_color / (i + 1.f) -  avg.mult(avg)).sqrt();
+                                for (size_t k = 0; k < SAMPLES_COUNT; ++k) {
+                                        for (size_t l = 0; l < SAMPLES_COUNT; ++l) {
+                                                float x = (2*(i*SAMPLES_COUNT + k + 0.5)/(float)(config.width*SAMPLES_COUNT) - 1)*tan(fov/2.)*config.width/(float)config.height;
+                                                float y = -(2*(j*SAMPLES_COUNT + l + 0.5)/(float)(config.height*SAMPLES_COUNT) - 1)*tan(fov/2.);
+                                                Vec<3, float> dir = Vec(x, y, -1).normalize();
+                                                const float desired_error = 0.5;
+                                                Vec<3, float> err(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
+                                                Vec<3, float> sum_color = {};
+                                                Vec<3, float> sum_sq_color = {};
+                                                int i = 0;
+                                                Vec<3, float> curr_color = {};
+                                                while (err.length() >= desired_error) {
+                                                        curr_color = ((float)i / (i + 1)) * curr_color + (1. / (i + 1)) * tracePath(Ray(Vec(0.f, 0, 0), dir), scenes[config.scene_num - 1], background[j][i]);
+                                                        if (i > 10) {
+                                                                sum_color += curr_color;
+                                                                sum_sq_color += curr_color.mult(curr_color);
+                                                                        auto avg = sum_color / (i + 1.f);
+                                                                err = (sum_sq_color / (i + 1.f) -  avg.mult(avg)).sqrt();
+                                                        }
+                                                        ++i;
+                                                }
+                                                cell_color += curr_color / (SAMPLES_COUNT * SAMPLES_COUNT);
                                         }
-                                        ++i;
                                 }
                         }
                         framebuffer[j][i] = cell_color;
