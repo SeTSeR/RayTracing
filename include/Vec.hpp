@@ -60,12 +60,22 @@ public:
                 result *= coef;
                 return result;
         };
+        Vec operator/(T coef) const {
+                return *this * (1. / coef);
+        };
         T operator*(const Vec &other) const {
                 T sum = {};
                 for (int i = 0; i < size; ++i) {
                         sum += arr[i] * other.arr[i];
                 }
                 return sum;
+        };
+        Vec mult(const Vec &other) const {
+                Vec result = *this;
+                for (int i = 0; i < size; ++i) {
+                        result.arr[i] *= other.arr[i];
+                }
+                return result;
         };
         T length() const {
                 return std::sqrt(*this * *this);
@@ -77,6 +87,13 @@ public:
         }
         Vec reflect(const Vec &norm) const {
                 return *this - norm * 2. * (norm * *this);
+        }
+        static Vec unitVecInHemisphere(const Vec &norm, T r1, T r2) {
+                static_assert(size == 3);
+                T phi = 2 * M_PI * r1;
+                T h = 2 * r2 - 1;
+                return Vec<3, float>(std::sin(phi) * std::sqrt(1 - h * h),
+                                     std::cos(phi) * std::sqrt(1 - h * h), h).normalize();
         }
         std::optional<Vec> refract(const Vec &norm, T n1, T n2 = 1.0) const {
                 T c  = - *this * norm;
@@ -98,6 +115,9 @@ public:
                         os << elem << " ";
                 }
                 return os;
+        }
+        friend Vec operator*(T r, const Vec& v) {
+                return v * r;
         }
 };
 

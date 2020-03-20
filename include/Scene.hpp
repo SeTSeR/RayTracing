@@ -59,6 +59,9 @@ public:
                         Vec(1.f, 1, 1) * specular_light_intensity * material.getAlbedo()[1] +
                         reflect_color * material.getAlbedo()[2] + refract_color * material.getAlbedo()[3];
         }
+        const std::vector<Light<T>> &getLights() const {
+                return lights;
+        }
 };
 
 #endif

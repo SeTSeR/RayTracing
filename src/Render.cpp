@@ -27,9 +27,9 @@ Render::Render() {
         scene2.addShape(std::make_unique<Plane<float>>(Vec(-1.f, 0, 0), Vec(8.f, 0, 0), Material<float>::medium_gray()));
         scene2.addShape(std::make_unique<Plane<float>>(Vec(0.f, -1, 0), Vec(0.f, 5, 0), Material<float>::medium_gray()));
         scene2.addShape(std::make_unique<Plane<float>>(Vec(0.f, 0, 1), Vec(0.f, 0.f, -9), Material<float>::medium_gray()));
-        scene2.addShape(std::make_unique<Sphere<float>>(Vec(-3.f, 0, -3), 1.f, Material<float>::mirror()));
+        scene2.addShape(std::make_unique<Sphere<float>>(Vec(-3.f, 0, -3), 1.f, Material<float>::ivory()));
         scene2.addShape(std::make_unique<Sphere<float>>(Vec(3.f, 3, -6), 1.f, Material<float>::red_rubber()));
-        scene2.addShape(std::make_unique<Plane<float>>(Vec(1.f, 0, -1).normalize(), Vec(0.f, 0, -4), Material<float>::glass()));
+        //scene2.addShape(std::make_unique<Plane<float>>(Vec(1.f, 0, -1).normalize(), Vec(0.f, 0, -4), Material<float>::glass()));
         scene2.addLight(Light(Vec(0.f, 2.5, 10), 2.f));
         scene2.addLight(Light(Vec(4.f, 0, -7), 1.7f));
         scenes.push_back(std::move(scene2));
@@ -55,16 +55,36 @@ Vec<3, float> Render::castRay(const Ray<float> &ray, const Scene<float> &scene, 
         }
 }
 
-Vec<3, float> Render::tracePath(const Ray<float> &ray, const Scene<float> &scene, int depth) {
-        while (depth < MAX_DEPTH) {
-                Vec<3, float> hit, norm;
-                Material<float> material;
-                if (!scene.intersects(ray, hit, norm, material)) {
-                        return Vec<3, float>();
-                }
-                ++depth;
+Vec<3, float> Render::tracePath(const Ray<float> &ray, const Scene<float> &scene, const Vec<3, float> &default_color, int depth) {
+        if (depth == MAX_DEPTH) {
+                return default_color;
         }
-        return Vec<3, float>();
+        Vec<3, float> point, norm;
+        Material<float> material;
+        if (!scene.intersects(ray, point, norm, material)) {
+                return default_color;
+        }
+
+        Vec<3, float> directLightning = {};
+        for (const auto &light: scene.getLights()) {
+                Vec light_direction = (light.getPosition() - point).normalize();
+                auto light_distance = (light.getPosition() - point).length();
+                Vec shadow_orig = light_direction * norm < 0 ? point - norm * 1e-3 : point + norm * 1e-3;
+                Material<float> mat;
+                Vec<3, float> hit, n;
+                if (!scene.intersects(Ray(shadow_orig, light_direction), hit, n, mat) || (hit - shadow_orig).length() >= light_distance) {
+                        directLightning += light.getIntensity() * std::max(0.f, light_direction * norm) * material.getDiffuseColor();
+                }
+        }
+        
+        float r1 = dis(gen);
+        float r2 = dis(gen);
+        Ray<float> newRay(point, Vec<3, float>::unitVecInHemisphere(norm, r1, r2));
+        float cos = newRay.direction * norm;
+        Vec BRDF = (1 / M_PI) * material.getDiffuseColor();
+        float PDF = 1. / M_PI;
+        Vec indirectLightning = ((cos / PDF) * BRDF).mult(tracePath(newRay, scene, default_color, depth + 1));
+        return (directLightning / M_PI + indirectLightning);
 }
 
 void Render::renderImage(const Config &config) {
@@ -74,6 +94,12 @@ void Render::renderImage(const Config &config) {
         float fov = M_PI/2;
 
         if (config.scene_num > scenes.size()) return;
+
+        if (config.scene_num == 1) {
+                render_mode = RAY_TRACER;
+        } else {
+                render_mode = PATH_TRACER;
+        }
 
         if (config.background_path) {
                 background.read_image(*config.background_path);
@@ -89,15 +115,26 @@ void Render::renderImage(const Config &config) {
         for (size_t j = 0; j < config.height; ++j) {
                 for (size_t i = 0; i < config.width; ++i) {
                         Vec<3, float> cell_color = {};
-                        for (size_t k = 0; k < SAMPLES_COUNT; ++k) {
-                                for (size_t l = 0; l < SAMPLES_COUNT; ++l) {
-                                        float x = (2*(i*SAMPLES_COUNT + k + 0.5)/(float)(config.width*SAMPLES_COUNT) - 1)*tan(fov/2.)*config.width/(float)config.height;
-                                        float y = -(2*(j*SAMPLES_COUNT + l + 0.5)/(float)(config.height*SAMPLES_COUNT) - 1)*tan(fov/2.);
-                                        Vec dir = Vec(x, y, -1).normalize();
-                                        cell_color += castRay(Ray(Vec(0.f, 0, 0), dir), scenes[config.scene_num - 1], background[j][i]);
+                        if (render_mode == RAY_TRACER) {
+                                for (size_t k = 0; k < SAMPLES_COUNT; ++k) {
+                                        for (size_t l = 0; l < SAMPLES_COUNT; ++l) {
+                                                float x = (2*(i*SAMPLES_COUNT + k + 0.5)/(float)(config.width*SAMPLES_COUNT) - 1)*tan(fov/2.)*config.width/(float)config.height;
+                                                float y = -(2*(j*SAMPLES_COUNT + l + 0.5)/(float)(config.height*SAMPLES_COUNT) - 1)*tan(fov/2.);
+                                                Vec dir = Vec(x, y, -1).normalize();
+                                                cell_color += castRay(Ray(Vec(0.f, 0, 0), dir), scenes[config.scene_num - 1], background[j][i]);
+                                        }
+                                }
+                                cell_color *= (1.f / (SAMPLES_COUNT * SAMPLES_COUNT));
+                        } else {
+                                float x = (2*(i + 0.5)/(float)config.width - 1)*tan(fov/2.)*config.width/(float)config.height;
+                                float y = -(2*(j + 0.5)/(float)config.height - 1)*tan(fov/2.);
+                                Vec<3, float> dir = Vec(x, y, -1).normalize();
+                                const int MAX_SAMPLES = 100;
+                                for (int i = 0; i < MAX_SAMPLES; ++i) {
+                                        cell_color = ((float)i / (i + 1)) * cell_color + (1. / (i + 1)) * tracePath(Ray(Vec(0.f, 0, 0), dir), scenes[config.scene_num - 1], background[j][i]);
                                 }
                         }
-                        framebuffer[j][i] = cell_color * (1.f/(SAMPLES_COUNT*SAMPLES_COUNT));
+                        framebuffer[j][i] = cell_color;
                         float max = std::max(framebuffer[j][i][0], std::max(framebuffer[j][i][1], framebuffer[j][i][2]));
                         if (max > 1) framebuffer[j][i] *= (1./max);
                 }
