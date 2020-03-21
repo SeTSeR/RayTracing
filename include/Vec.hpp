@@ -62,6 +62,9 @@ public:
                 result *= coef;
                 return result;
         };
+        Vec operator/=(T coef) {
+                return *this *= (1. / coef);
+        };
         Vec operator/(T coef) const {
                 return *this * (1. / coef);
         };
@@ -102,9 +105,8 @@ public:
                 return Vec<3, float>(std::sin(phi) * std::sqrt(1 - h * h),
                                      std::cos(phi) * std::sqrt(1 - h * h), h).normalize();
         }
-        static Vec cosineVecInHemisphere(const Vec &norm, T r1, T r2) {
+        static Vec cosineVecInHemisphere(const Vec &norm, T r1, T r2, T exponent = 1) {
                 static_assert(size == 3);
-                T exponent = 1;
                 T phi = 2 * M_PI * r1;
                 T cosTheta = std::pow(1 - r2, 1./(exponent + 1.));
                 T sinTheta = std::sqrt(1 - cosTheta * cosTheta);

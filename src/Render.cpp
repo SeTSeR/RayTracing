@@ -80,6 +80,17 @@ Vec<3, float> Render::tracePath(const Ray<float> &ray, const Scene<float> &scene
                 norm = -norm;
         }
 
+        Vec<3, float> materialColor = material.getDiffuseColor();
+        float max_refl = std::max(materialColor[0], std::max(materialColor[1], materialColor[2]));
+        // Russian roulette
+        if (depth > 4) {
+                if (dis(gen) < max_refl) {
+                        materialColor /= max_refl;
+                } else {
+                        return default_color;
+                }
+        }
+
         Vec<3, float> directLighting = {};
         for (const auto &light: scene.getLights()) {
                 Vec light_direction = (light.getPosition() - point).normalize();
@@ -90,12 +101,12 @@ Vec<3, float> Render::tracePath(const Ray<float> &ray, const Scene<float> &scene
                 if (!scene.intersects(Ray(shadow_orig, light_direction), hit, n, mat) || (hit - shadow_orig).length() >= light_distance) {
                         auto diffuseLight = light.getIntensity() * std::max(0.f, light_direction * norm);
                         auto specularLight = light.getIntensity() * std::pow(std::max(0.f, light_direction.reflect(norm) * ray.direction), material.getSpecularExponent());
-                        directLighting += material.getDiffuseColor() * diffuseLight * material.getAlbedo()[0] +
+                        directLighting += materialColor * diffuseLight * material.getAlbedo()[0] +
                                 Vec(1.f, 1, 1) * specularLight * material.getAlbedo()[1];
                 }
         }
 
-        float diff_avg = material.getDiffuseColor() * Vec(1.f, 1, 1) * material.getAlbedo()[0] / 3.f;
+        float diff_avg = materialColor * Vec(1.f, 1, 1) * material.getAlbedo()[0] / 3.f;
         float spec_avg = Vec(1.f, 1, 1) * Vec(1.f, 1, 1) * (material.getAlbedo()[1] + material.getAlbedo()[2]) / 3.f;
         float refr_avg = Vec(1.f, 1, 1) * Vec(1.f, 1, 1) * material.getAlbedo()[3] / 3.f;
         float xi = dis(gen) * std::max(diff_avg + spec_avg + refr_avg, 1.f);
@@ -108,7 +119,7 @@ Vec<3, float> Render::tracePath(const Ray<float> &ray, const Scene<float> &scene
         if (xi <= diff_avg) {
                 newRay = Ray<float>(point, Vec<3, float>::cosineVecInHemisphere(norm, r1, r2));
                 cos = newRay.direction * norm;
-                BRDF = (1 / M_PI) * material.getDiffuseColor() / diff_avg;
+                BRDF = (1 / M_PI) * materialColor / diff_avg;
                 PDF = cos / M_PI;
         } else if (xi <= diff_avg + spec_avg) {
                 Vec reflect_direction = ray.direction.reflect(norm).normalize();
@@ -127,7 +138,7 @@ Vec<3, float> Render::tracePath(const Ray<float> &ray, const Scene<float> &scene
                 indirectLighting = cos * BRDF.mult(tracePath(newRay, scene, default_color, depth + 1));
         }
         if (material.getAlbedo()[2] > 0) {
-                newRay = Ray<float>(point, ray.direction.reflect(norm).normalize());
+                newRay = Ray(point, ray.direction.reflect(norm).normalize());
                 indirectLighting += material.getAlbedo()[2] * Vec(1.f, 1, 1).mult(tracePath(newRay, scene, default_color, depth + 1));
         }
         return (directLighting / M_PI + indirectLighting);
