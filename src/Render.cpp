@@ -157,7 +157,7 @@ void Render::renderImage(const Config &config) {
                                 float x = (2*(i + 0.5)/(float)config.width - 1)*tan(fov/2.)*config.width/(float)config.height;
                                 float y = -(2*(j + 0.5)/(float)config.height - 1)*tan(fov/2.);
                                 Vec<3, float> dir = Vec(x, y, -1).normalize();
-                                const float desired_error = 0.5;
+                                const float desired_error = 1;
                                 Vec<3, float> err(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
                                 Vec<3, float> sum_color = {};
                                 Vec<3, float> sum_sq_color = {};
