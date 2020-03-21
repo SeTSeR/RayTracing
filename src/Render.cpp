@@ -152,7 +152,7 @@ void Render::renderImage(const Config &config) {
 
         if (config.scene_num > scenes.size()) return;
 
-        if (config.scene_num == 1) {
+        if (config.scene_num == 1 || config.scene_num == 3) {
                 render_mode = RAY_TRACER;
         } else {
                 render_mode = PATH_TRACER;
@@ -190,14 +190,13 @@ void Render::renderImage(const Config &config) {
                                 float x = (2*(i + 0.5)/(float)config.width - 1)*tan(fov/2.)*config.width/(float)config.height;
                                 float y = -(2*(j + 0.5)/(float)config.height - 1)*tan(fov/2.);
                                 Vec<3, float> dir = Vec(x, y, -1).normalize();
-                                const float desired_error = 1;
                                 Vec<3, float> err(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
                                 Vec<3, float> sum_color = {};
                                 Vec<3, float> sum_sq_color = {};
                                 int i = 0;
-                                while (err.length() >= desired_error) {
+                                while (err.length() >= ERROR) {
                                         cell_color = ((float)i / (i + 1)) * cell_color + (1. / (i + 1)) * tracePath(Ray(Vec(0.f, 0, 0), dir), scenes[config.scene_num - 1], background[j][i]);
-                                        if (i > 10) {
+                                        if (i > 100) {
                                                 sum_color += cell_color;
                                                 sum_sq_color += cell_color.mult(cell_color);
                                                 auto avg = sum_color / (i + 1.f);
