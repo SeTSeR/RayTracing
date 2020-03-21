@@ -35,6 +35,12 @@ Render::Render() {
         scene2.addLight(Light(Vec(0.f, 2.5, 10), 2.f));
         scene2.addLight(Light(Vec(4.f, 0, -7), 1.7f));
         scenes.push_back(std::move(scene2));
+
+        Scene<float> scene3;
+        scene3.addShape(std::make_unique<Sphere<float>>(Vec(0.f, 0, 0), 7.f, Material<float>::ivory()));
+        scene3.addShape(std::make_unique<Sphere<float>>(Vec(3.f, 3, 3), 3.f, Material<float>::red_rubber()));
+        scene3.addLight(Light(Vec(0.f, 1, 0), 1.7f));
+        scenes.push_back(std::move(scene3));
 }
 
 Vec<3, float> Render::castRay(const Ray<float> &ray, const Scene<float> &scene, const Vec<3, float> &default_color, int depth) {
