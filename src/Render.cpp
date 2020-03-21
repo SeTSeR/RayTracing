@@ -117,7 +117,7 @@ void Render::renderImage(const Config &config) {
                 omp_set_num_threads(*config.threads_num);
         }
 
-#pragma omp parallel for shedule(dynamic);
+#pragma omp parallel for schedule(dynamic)
         for (size_t j = 0; j < config.height; ++j) {
                 for (size_t i = 0; i < config.width; ++i) {
                         Vec<3, float> cell_color = {};
