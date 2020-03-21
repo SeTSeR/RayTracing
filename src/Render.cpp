@@ -29,10 +29,9 @@ Render::Render() {
         scene2.addShape(std::make_unique<Plane<float>>(Vec(-1.f, 0, 0), Vec(8.f, 0, 0), Material<float>::medium_gray()));
         scene2.addShape(std::make_unique<Plane<float>>(Vec(0.f, -1, 0), Vec(0.f, 5, 0), Material<float>::medium_gray()));
         scene2.addShape(std::make_unique<Plane<float>>(Vec(0.f, 0, 1), Vec(0.f, 0.f, -9), Material<float>::medium_gray()));
-        scene2.addShape(std::make_unique<Sphere<float>>(Vec(-3.f, 0, -3), 1.f, Material<float>::ivory()));
+        scene2.addShape(std::make_unique<Sphere<float>>(Vec(-3.f, 0, -3), 1.f, Material<float>::mirror()));
         scene2.addShape(std::make_unique<Sphere<float>>(Vec(3.f, 3, -6), 1.f, Material<float>::red_rubber()));
-        //scene2.addShape(std::make_unique<Plane<float>>(Vec(1.f, 0, -1).normalize(), Vec(0.f, 0, -4), Material<float>::glass()));
-        scene2.addLight(Light(Vec(0.f, 2.5, 10), 2.f));
+        scene2.addLight(Light(Vec(0.f, 2.5, 10), 4.f));
         scene2.addLight(Light(Vec(4.f, 0, -7), 1.7f));
         scenes.push_back(std::move(scene2));
 
