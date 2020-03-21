@@ -49,6 +49,9 @@ Vec<3, float> Render::castRay(const Ray<float> &ray, const Scene<float> &scene, 
         if (depth > MAX_DEPTH || !scene.intersects(ray, point, norm, material)) {
                 return default_color;
         }
+        if (ray.direction * norm > 0) {
+                norm = -norm;
+        }
         Vec reflect_direction = ray.direction.reflect(norm).normalize();
         Vec reflect_origin = reflect_direction * norm < 0 ? point - norm * 1e-3 : point + norm * 1e-3;
         Vec reflect_color = castRay(Ray(reflect_origin, reflect_direction), scene, default_color, depth + 1);
@@ -71,6 +74,10 @@ Vec<3, float> Render::tracePath(const Ray<float> &ray, const Scene<float> &scene
         Material<float> material;
         if (!scene.intersects(ray, point, norm, material)) {
                 return default_color;
+        }
+
+        if (norm * ray.direction > 0) {
+                norm = -norm;
         }
 
         Vec<3, float> directLighting = {};
