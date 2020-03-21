@@ -68,8 +68,6 @@ Vec<3, float> Render::tracePath(const Ray<float> &ray, const Scene<float> &scene
         }
 
         Vec<3, float> directLighting = {};
-        Vec<3, float> indirectLighting;
-        float Sigma = material.getAlbedo() * Vec(1.f, 1, 1, 1);
         float xi = dis(gen);
         float r1 = dis(gen);
         float r2 = dis(gen);
@@ -77,7 +75,7 @@ Vec<3, float> Render::tracePath(const Ray<float> &ray, const Scene<float> &scene
         float PDF;
         Ray<float> newRay;
         float cos;
-        if (xi <= material.getAlbedo()[0] / Sigma) {
+        if (xi <= material.getAlbedo()[0]) {
                 for (const auto &light: scene.getLights()) {
                         Vec light_direction = (light.getPosition() - point).normalize();
                         auto light_distance = (light.getPosition() - point).length();
@@ -91,25 +89,25 @@ Vec<3, float> Render::tracePath(const Ray<float> &ray, const Scene<float> &scene
                 
                 newRay = Ray<float>(point, Vec<3, float>::cosineVecInHemisphere(norm, r1, r2));
                 cos = newRay.direction * norm;
-                BRDF = (1 / M_PI) * Vec(1.f, 1, 1);
+                BRDF = (1 / M_PI) * material.getDiffuseColor();
                 PDF = cos / M_PI;
-        } else if (xi <= (material.getAlbedo()[0] + material.getAlbedo()[1] + material.getAlbedo()[2]) / Sigma) {
+        } else if (xi <= (material.getAlbedo()[0] + material.getAlbedo()[1] + material.getAlbedo()[2]) && false) {
                 Vec reflect_direction = ray.direction.reflect(norm).normalize();
                 Vec new_direction = Vec<3, float>::fixedPhongVec(r1, r2, material.getSpecularExponent());
                 newRay = Ray<float>(point, new_direction);
                 cos = new_direction * norm;
-                BRDF = (material.getSpecularExponent() + 2) / (2 * M_PI) * std::pow(cos, material.getSpecularExponent()) * Vec(1.f, 1, 1);
+                BRDF = (material.getSpecularExponent() + 2) / (2 * M_PI) * std::pow(cos, material.getSpecularExponent()) * material.getDiffuseColor();
                 PDF = (material.getSpecularExponent() + 1) / (2 * M_PI) * std::pow(cos, material.getSpecularExponent());
         } else {
                 std::optional refract_direction = ray.direction.refract(norm, material.getRefractiveIndex())->normalize();
                 if (refract_direction) {
                         newRay = Ray<float>(point, Vec<3, float>::cosineVecInHemisphere(*refract_direction, r1, r2));
                         cos = newRay.direction * norm;
-                        BRDF = (1 / M_PI) * Vec(1.f, 1, 1);
+                        BRDF = (1 / M_PI) * material.getDiffuseColor();
                         PDF = cos / M_PI;
                 } else return default_color;
         }
-        indirectLighting = ((cos / PDF) * BRDF).mult(tracePath(newRay, scene, default_color, depth + 1));
+        Vec indirectLighting = ((cos / PDF) * BRDF).mult(tracePath(newRay, scene, default_color, depth + 1));
         return (directLighting / M_PI + indirectLighting);
 }
 
