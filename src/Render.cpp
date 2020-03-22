@@ -30,16 +30,22 @@ Render::Render() {
         scene2.addShape(std::make_unique<Plane<float>>(Vec(-1.f, 0, 0), Vec(8.f, 0, 0), Material<float>::medium_gray()));
         scene2.addShape(std::make_unique<Plane<float>>(Vec(0.f, -1, 0), Vec(0.f, 5, 0), Material<float>::medium_gray()));
         scene2.addShape(std::make_unique<Plane<float>>(Vec(0.f, 0, 1), Vec(0.f, 0.f, -9), Material<float>::medium_gray()));
-        scene2.addShape(std::make_unique<Sphere<float>>(Vec(-3.f, 0, -3), 1.f, Material<float>::mirror()));
+        scene2.addShape(std::make_unique<Sphere<float>>(Vec(-3.f, 0, -3), 1.f, Material<float>::ivory()));
         scene2.addShape(std::make_unique<Sphere<float>>(Vec(3.f, 3, -6), 1.f, Material<float>::red_rubber()));
         scene2.addLight(Light(Vec(0.f, 2.5, 10), 4.f));
         scene2.addLight(Light(Vec(4.f, 0, -7), 1.7f));
         scenes.push_back(std::move(scene2));
 
         Scene<float> scene3;
-        scene3.addShape(std::make_unique<Sphere<float>>(Vec(0.f, 0, 0), 7.f, Material<float>::ivory()));
-        scene3.addShape(std::make_unique<Sphere<float>>(Vec(3.f, 3, 3), 3.f, Material<float>::red_rubber()));
-        scene3.addLight(Light(Vec(0.f, 1, 0), 1.7f));
+        scene3.addShape(std::make_unique<Plane<float>>(Vec(0.f, 1, 0), Vec(0.f, -3.5, 0), Material<float>::medium_gray()));
+        scene3.addShape(std::make_unique<Plane<float>>(Vec(1.f, 0, 0), Vec(-8.f, 0, 0), Material<float>::medium_gray()));
+        scene3.addShape(std::make_unique<Plane<float>>(Vec(-1.f, 0, 0), Vec(8.f, 0, 0), Material<float>::medium_gray()));
+        scene3.addShape(std::make_unique<Plane<float>>(Vec(0.f, -1, 0), Vec(0.f, 5, 0), Material<float>::medium_gray()));
+        scene3.addShape(std::make_unique<Plane<float>>(Vec(0.f, 0, 1), Vec(0.f, 0.f, -9), Material<float>::medium_gray()));
+        scene3.addShape(std::make_unique<Sphere<float>>(Vec(-3.f, 0, -3), 1.f, Material<float>::mirror()));
+        scene3.addShape(std::make_unique<Sphere<float>>(Vec(3.f, 3, -6), 1.f, Material<float>::red_rubber()));
+        scene3.addLight(Light(Vec(0.f, 2.5, 10), 4.f));
+        scene3.addLight(Light(Vec(4.f, 0, -7), 1.7f));
         scenes.push_back(std::move(scene3));
 }
 
@@ -155,7 +161,7 @@ void Render::renderImage(const Config &config) {
 
         if (config.scene_num > scenes.size()) return;
 
-        if (config.scene_num == 1 || config.scene_num == 3) {
+        if (config.scene_num == 1) {
                 render_mode = RAY_TRACER;
         } else {
                 render_mode = PATH_TRACER;
