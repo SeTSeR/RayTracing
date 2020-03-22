@@ -48,14 +48,17 @@ Vec<3, float> Render::castRay(const Ray<float> &ray, const Scene<float> &scene, 
         if (depth > MAX_DEPTH || !scene.intersects(ray, point, norm, material)) {
                 return default_color;
         }
+        bool into = false;
         if (ray.direction * norm > 0) {
                 norm = -norm;
+                into = true;
         }
         Vec reflect_direction = ray.direction.reflect(norm).normalize();
         Vec reflect_origin = reflect_direction * norm < 0 ? point - norm * 1e-3 : point + norm * 1e-3;
         Vec reflect_color = castRay(Ray(reflect_origin, reflect_direction), scene, default_color, depth + 1);
 
-        std::optional refract_direction = ray.direction.refract(norm, material.getRefractiveIndex())->normalize();
+        float refr_index = into ? material.getRefractiveIndex() : 1.f / material.getRefractiveIndex();
+        std::optional refract_direction = ray.direction.refract(norm, refr_index)->normalize();
         if (refract_direction) {
                 Vec refract_origin = *refract_direction * norm < 0 ? point - norm * 1e-3 : point + norm * 1e-3;
                 Vec refract_color = castRay(Ray(refract_origin, *refract_direction), scene, default_color, depth + 1);
