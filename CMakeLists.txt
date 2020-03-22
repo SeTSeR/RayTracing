@@ -17,6 +17,7 @@ target_link_libraries(RayTracing PUBLIC Render)
 find_package(OpenMP)
 
 if (OpenMP_CXX_FOUND)
+   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fopenmp")
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
    target_link_libraries(RayTracing PUBLIC OpenMP::OpenMP_CXX)
 endif()

@@ -12,7 +12,8 @@
 
 class Render {
 private:
-        constexpr static int MAX_DEPTH = 4;
+        constexpr static float ERROR = 0.15;
+        constexpr static int MAX_DEPTH = 10;
         constexpr static int SAMPLES_COUNT = 2;
         std::vector<Scene<float>> scenes;
         enum {
