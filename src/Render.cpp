@@ -1,3 +1,4 @@
+#include "Box.hpp"
 #include "Image.hpp"
 #include "Material.hpp"
 #include "Plane.hpp"
