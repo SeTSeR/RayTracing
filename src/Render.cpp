@@ -8,11 +8,10 @@
 
 #include <cmath>
 #include <memory>
+#include <thread>
 #include <vector>
 
-#include <omp.h>
-
-Render::Render() {
+Render::Render(const Config &config): config(config) {
         Scene<float> scene;
         scene.addShape(std::make_unique<Sphere<float>>(Vec(-3.f, 0, -16), 2.f, Material<float>::ivory()));
         scene.addShape(std::make_unique<Sphere<float>>(Vec(-1.f, -1.5, -12), 2.f, Material<float>::glass()));
@@ -52,7 +51,7 @@ Render::Render() {
 Vec<3, float> Render::castRay(const Ray<float> &ray, const Scene<float> &scene, const Vec<3, float> &default_color, int depth) {
         Vec<3, float> point, norm;
         Material<float> material;
-        if (depth > MAX_DEPTH || !scene.intersects(ray, point, norm, material)) {
+        if (depth > config.MAX_DEPTH || !scene.intersects(ray, point, norm, material)) {
                 return default_color;
         }
         bool into = false;
@@ -76,7 +75,7 @@ Vec<3, float> Render::castRay(const Ray<float> &ray, const Scene<float> &scene, 
 }
 
 Vec<3, float> Render::tracePath(const Ray<float> &ray, const Scene<float> &scene, const Vec<3, float> &default_color, int depth) {
-        if (depth == MAX_DEPTH) {
+        if (depth == config.MAX_DEPTH) {
                 return default_color;
         }
         Vec<3, float> point, norm;
@@ -153,7 +152,7 @@ Vec<3, float> Render::tracePath(const Ray<float> &ray, const Scene<float> &scene
         return (directLighting / M_PI + indirectLighting);
 }
 
-void Render::renderImage(const Config &config) {
+void Render::renderImage() {
         Image framebuffer(config.width, config.height);
         Image background(config.width, config.height);
 
@@ -177,53 +176,65 @@ void Render::renderImage(const Config &config) {
                 }
         }
 
-        if (config.threads_num) {
-                omp_set_num_threads(*config.threads_num);
-        }
+        std::vector<std::thread> thread_pool;
 
-#pragma omp parallel for schedule(dynamic)
-        for (size_t j = 0; j < config.height; ++j) {
-                for (size_t i = 0; i < config.width; ++i) {
+        size_t threads_count = config.threads_num ? *config.threads_num : 1;
+        size_t block_length = (config.height * config.width + threads_count - 1) / threads_count;
+        block_length = block_length - block_length % config.width + config.width;
+
+        size_t curr_block_begin = 0;
+        for (size_t thread = 0; thread < threads_count; ++thread) {
+            size_t curr_block_end = std::min((size_t)config.width * config.height, curr_block_begin + block_length);
+            thread_pool.emplace_back([this, fov, &framebuffer, &background](size_t block_begin, size_t block_end) {
+                for (size_t j = block_begin / config.width; j < block_end / config.width; ++j) {
+                    for (size_t i = 0; i < config.width; ++i) {
                         Vec<3, float> cell_color = {};
                         if (render_mode == RAY_TRACER) {
-                                for (size_t k = 0; k < SAMPLES_COUNT; ++k) {
-                                        for (size_t l = 0; l < SAMPLES_COUNT; ++l) {
-                                                float x = (2*(i*SAMPLES_COUNT + k + 0.5)/(float)(config.width*SAMPLES_COUNT) - 1)*tan(fov/2.)*config.width/(float)config.height;
-                                                float y = -(2*(j*SAMPLES_COUNT + l + 0.5)/(float)(config.height*SAMPLES_COUNT) - 1)*tan(fov/2.);
-                                                Vec dir = Vec(x, y, -1).normalize();
-                                                cell_color += castRay(Ray(Vec(0.f, 0, 0), dir), scenes[config.scene_num - 1], background[j][i]);
-                                        }
+                            for (size_t k = 0; k < config.SAMPLES_COUNT; ++k) {
+                                for (size_t l = 0; l < config.SAMPLES_COUNT; ++l) {
+                                    float x = (2*(i*config.SAMPLES_COUNT + k + 0.5)/(float)(config.width*config.SAMPLES_COUNT) - 1)*tan(fov/2.)*config.width/(float)config.height;
+                                    float y = -(2*(j*config.SAMPLES_COUNT + l + 0.5)/(float)(config.height*config.SAMPLES_COUNT) - 1)*tan(fov/2.);
+                                    Vec dir = Vec(x, y, -1).normalize();
+                                    cell_color += castRay(Ray(Vec(0.f, 0, 0), dir), scenes[config.scene_num - 1], background[j][i]);
                                 }
-                                cell_color *= (1.f / (SAMPLES_COUNT * SAMPLES_COUNT));
+                            }
+                            cell_color *= (1.f / (config.SAMPLES_COUNT * config.SAMPLES_COUNT));
                         } else {
-                                for (size_t k = 0; k < SAMPLES_COUNT; ++k) {
-                                        for (size_t l = 0; l < SAMPLES_COUNT; ++l) {
-                                                float x = (2*(i*SAMPLES_COUNT + k + 0.5)/(float)(config.width*SAMPLES_COUNT) - 1)*tan(fov/2.)*config.width/(float)config.height;
-                                                float y = -(2*(j*SAMPLES_COUNT + l + 0.5)/(float)(config.height*SAMPLES_COUNT) - 1)*tan(fov/2.);
-                                                Vec<3, float> dir = Vec(x, y, -1).normalize();
-                                                Vec<3, float> err(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
-                                                Vec<3, float> sum_color = {};
-                                                Vec<3, float> sum_sq_color = {};
-                                                int i = 0;
-                                                Vec<3, float> curr_color = {};
-                                                while (err.length() >= ERROR) {
-                                                        curr_color = ((float)i / (i + 1)) * curr_color + (1. / (i + 1)) * tracePath(Ray(Vec(0.f, 0, 0), dir), scenes[config.scene_num - 1], background[j][i]);
-                                                        if (i > MIN_SAMPLES) {
-                                                                sum_color += curr_color;
-                                                                sum_sq_color += curr_color.mult(curr_color);
-                                                                        auto avg = sum_color / (i + 1.f);
-                                                                err = (sum_sq_color / (i + 1.f) -  avg.mult(avg)).sqrt();
-                                                        }
-                                                        ++i;
-                                                }
-                                                cell_color += curr_color / (SAMPLES_COUNT * SAMPLES_COUNT);
+                            for (size_t k = 0; k < config.SAMPLES_COUNT; ++k) {
+                                for (size_t l = 0; l < config.SAMPLES_COUNT; ++l) {
+                                    float x = (2*(i*config.SAMPLES_COUNT + k + 0.5)/(float)(config.width*config.SAMPLES_COUNT) - 1)*tan(fov/2.)*config.width/(float)config.height;
+                                    float y = -(2*(j*config.SAMPLES_COUNT + l + 0.5)/(float)(config.height*config.SAMPLES_COUNT) - 1)*tan(fov/2.);
+                                    Vec<3, float> dir = Vec(x, y, -1).normalize();
+                                    Vec<3, float> err(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
+                                    Vec<3, float> sum_color = {};
+                                    Vec<3, float> sum_sq_color = {};
+                                    int i = 0;
+                                    Vec<3, float> curr_color = {};
+                                    while (err.length() >= config.ERROR) {
+                                        curr_color = ((float)i / (i + 1)) * curr_color + (1. / (i + 1)) * tracePath(Ray(Vec(0.f, 0, 0), dir), scenes[config.scene_num - 1], background[j][i]);
+                                        if (i > config.MIN_SAMPLES) {
+                                            sum_color += curr_color;
+                                            sum_sq_color += curr_color.mult(curr_color);
+                                            auto avg = sum_color / (i + 1.f);
+                                            err = (sum_sq_color / (i + 1.f) -  avg.mult(avg)).sqrt();
                                         }
+                                        ++i;
+                                    }
+                                    cell_color += curr_color / (config.SAMPLES_COUNT * config.SAMPLES_COUNT);
                                 }
+                            }
                         }
                         framebuffer[j][i] = cell_color;
                         float max = std::max(framebuffer[j][i][0], std::max(framebuffer[j][i][1], framebuffer[j][i][2]));
                         if (max > 1) framebuffer[j][i] *= (1./max);
+                    }
                 }
+            }, curr_block_begin, curr_block_end);
+            curr_block_begin = curr_block_end;
+        }
+
+        for (auto &thread : thread_pool) {
+            thread.join();
         }
 
         framebuffer.write_png(config.output_path);

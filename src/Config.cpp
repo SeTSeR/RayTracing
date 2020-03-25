@@ -8,7 +8,7 @@ bool streq(const char *s1, const char *s2) {
 }
 
 std::optional<Config> parse_args(int argc, char* argv[]) {
-        Config config;
+        Config config = {};
         bool out_met = false;
         bool scene_met = false;
         for (int param_num = 1; param_num < argc; param_num += 2) {
