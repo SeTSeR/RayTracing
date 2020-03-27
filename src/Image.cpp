@@ -35,7 +35,7 @@ int Image::read_image(const std::filesystem::path& path) {
                                        .skip = &skip,
                                        .eof = &eof,
         };
-        std::ifstream in(path);
+        std::ifstream in(path, std::ifstream::binary);
         unsigned char *data = stbi_load_from_callbacks(&callbacks, &in, &x, &y, &n, 0);
         if (data && n == RGB && x >= width && y >= height) {
                 for (ssize_t i = 0; i < height * width; ++i) {
@@ -55,8 +55,8 @@ void write_func(void *context, void* data, int size) {
 
 int Image::write_png(const std::filesystem::path& path) {
         const int RGB = 3;
-        std::ofstream out(path);
-        char* data = new char[width * height * RGB];
+        std::ofstream out(path, std::ofstream::binary);
+        auto* data = new unsigned char[width * height * RGB];
         for (ssize_t i = 0; i < height * width; ++i) {
                 for (ssize_t j = 0; j < RGB; ++j) {
                         data[i*RGB + j] = 255 * std::max(0.f, std::min(1.f, buffer[i][j]));
