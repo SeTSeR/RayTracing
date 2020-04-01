@@ -11,8 +11,8 @@ struct Config {
         size_t scene_num;
         size_t width = 1056;
         size_t height = 594;
-        int MIN_SAMPLES = 40;
-        float ERROR = 0.5;
+        int MIN_SAMPLES = 10;
+        float ERROR = 1;
         int MAX_DEPTH = 10;
         int SAMPLES_COUNT = 2;
 };

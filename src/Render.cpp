@@ -163,7 +163,7 @@ Vec<3, float> Render::tracePathIterative(const Ray<float> &ray, const Scene<floa
             break;
         }
 
-        if (norm * ray.direction > 0) {
+        if (norm * curr_ray.direction > 0) {
             norm = -norm;
         }
 
