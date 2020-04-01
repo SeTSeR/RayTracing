@@ -20,6 +20,7 @@ private:
         std::vector<Scene<float>> scenes;
         Vec<3, float> castRay(const Ray<float>&, const Scene<float>&, const Vec<3, float>&, int depth = 0);
         Vec<3, float> tracePath(const Ray<float>&, const Scene<float>&, const Vec<3, float>&, int depth = 0);
+        Vec<3, float> tracePathIterative(const Ray<float> &, const Scene<float>&, const Vec<3, float>&);
         std::random_device rd = std::random_device();
         std::mt19937 gen = std::mt19937(rd());
         std::uniform_real_distribution<float> dis = std::uniform_real_distribution<float>(0, 1);

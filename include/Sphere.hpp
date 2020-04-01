@@ -32,10 +32,7 @@ public:
                 } else {
                         distance = d1;
                 }
-                if (d1 < 0 && d2 < 0) {
-                        return false;
-                }
-                return true;
+            return !(d1 < 0 && d2 < 0);
         }
 
         virtual const Material<T>& getMaterial() const {

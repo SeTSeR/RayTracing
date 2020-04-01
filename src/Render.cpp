@@ -152,6 +152,95 @@ Vec<3, float> Render::tracePath(const Ray<float> &ray, const Scene<float> &scene
         return (directLighting / M_PI + indirectLighting);
 }
 
+Vec<3, float> Render::tracePathIterative(const Ray<float> &ray, const Scene<float> &scene, const Vec<3, float> &default_color) {
+    int depth = 0;
+    Vec<3, float> curr_light = {}, multiplier = Vec(1.f, 1, 1);
+    auto curr_ray = ray;
+    while (depth < config.MAX_DEPTH) {
+        Vec<3, float> point, norm;
+        Material<float> material;
+        if (!scene.intersects(curr_ray, point, norm, material)) {
+            break;
+        }
+
+        if (norm * ray.direction > 0) {
+            norm = -norm;
+        }
+
+        Vec<3, float> materialColor = material.getDiffuseColor();
+        float max_refl = std::max(materialColor[0], std::max(materialColor[1], materialColor[2]));
+        // Russian roulette
+        if (depth > 4) {
+            if (dis(gen) < max_refl) {
+                materialColor /= max_refl;
+            } else {
+                break;
+            }
+        }
+
+        Vec<3, float> directLighting = {};
+        for (const auto &light: scene.getLights()) {
+            Vec light_direction = (light.getPosition() - point).normalize();
+            auto light_distance = (light.getPosition() - point).length();
+            Vec shadow_orig = light_direction * norm < 0 ? point - norm * 1e-3 : point + norm * 1e-3;
+            Material<float> mat;
+            Vec<3, float> hit, n;
+            if (!scene.intersects(Ray(shadow_orig, light_direction), hit, n, mat) ||
+                (hit - shadow_orig).length() >= light_distance) {
+                auto diffuseLight = light.getIntensity() * std::max(0.f, light_direction * norm);
+                auto specularLight = light.getIntensity() *
+                                     std::pow(std::max(0.f, light_direction.reflect(norm) * curr_ray.direction),
+                                              material.getSpecularExponent());
+                directLighting += materialColor * diffuseLight * material.getAlbedo()[0] +
+                                  Vec(1.f, 1, 1) * specularLight * material.getAlbedo()[1];
+            }
+        }
+
+        float diff_avg = materialColor * Vec(1.f, 1, 1) * material.getAlbedo()[0] / 3.f;
+        float spec_avg = Vec(1.f, 1, 1) * Vec(1.f, 1, 1) * (material.getAlbedo()[1] + material.getAlbedo()[2]) / 3.f;
+        float refr_avg = Vec(1.f, 1, 1) * Vec(1.f, 1, 1) * material.getAlbedo()[3] / 3.f;
+        float xi = dis(gen) * std::max(diff_avg + spec_avg + refr_avg, 1.f);
+        float r1 = dis(gen);
+        float r2 = dis(gen);
+        Vec<3, float> BRDF;
+        float PDF;
+        Ray<float> newRay;
+        float cos;
+        if (xi <= diff_avg) {
+            newRay = Ray<float>(point, Vec<3, float>::cosineVecInHemisphere(norm, r1, r2));
+            cos = newRay.direction * norm;
+            BRDF = (1 / M_PI) * materialColor / diff_avg;
+            PDF = cos / M_PI;
+        } else if (xi <= diff_avg + spec_avg) {
+            Vec reflect_direction = curr_ray.direction.reflect(norm).normalize();
+            Vec new_direction = Vec<3, float>::fixedPhongVec(r1, r2, material.getSpecularExponent());
+            std::pair base = Vec<3, float>::genOrthogonal(reflect_direction);
+            new_direction = (new_direction[0] * base.first + new_direction[1] * reflect_direction +
+                             new_direction[2] * base.second).normalize();
+            float cosTheta = std::max(new_direction * reflect_direction, 0.f);
+            newRay = Ray<float>(point, new_direction);
+            cos = newRay.direction * norm;
+            BRDF = (material.getSpecularExponent() + 2) / (2 * M_PI) *
+                   std::pow(cosTheta, material.getSpecularExponent()) * Vec(1.f, 1, 1) *
+                   (material.getAlbedo()[1] + material.getAlbedo()[2]);
+            PDF = (material.getSpecularExponent() + 1) / (2 * M_PI) *
+                  std::pow(cosTheta, material.getSpecularExponent());
+        }
+        float p = dis(gen);
+        Vec<3, float> indirectLightingMultiplier = {};
+        if (p < PDF) {
+            indirectLightingMultiplier = cos * BRDF;
+        }
+        curr_ray = newRay;
+        curr_light += multiplier.mult(directLighting);
+        multiplier = multiplier.mult(indirectLightingMultiplier);
+
+        ++depth;
+    }
+    curr_light += multiplier.mult(default_color);
+    return curr_light;
+}
+
 void Render::renderImage() {
         Image framebuffer(config.width, config.height);
         Image background(config.width, config.height);
@@ -211,7 +300,7 @@ void Render::renderImage() {
                                     int i = 0;
                                     Vec<3, float> curr_color = {};
                                     while (err.length() >= config.ERROR) {
-                                        curr_color = ((float)i / (i + 1)) * curr_color + (1. / (i + 1)) * tracePath(Ray(Vec(0.f, 0, 0), dir), scenes[config.scene_num - 1], background[j][i]);
+                                        curr_color = ((float)i / (i + 1)) * curr_color + (1. / (i + 1)) * tracePathIterative(Ray(Vec(0.f, 0, 0), dir), scenes[config.scene_num - 1], background[j][i]);
                                         if (i > config.MIN_SAMPLES) {
                                             sum_color += curr_color;
                                             sum_sq_color += curr_color.mult(curr_color);
