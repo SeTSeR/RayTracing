@@ -11,6 +11,8 @@ struct Config {
         size_t scene_num;
         size_t width = 1056;
         size_t height = 594;
+        size_t BLOCK_LENGTH = 2*width;
+        size_t BLOCK_COUNT = width * height / BLOCK_LENGTH;
         int MIN_SAMPLES = 10;
         float ERROR = 1;
         int MAX_DEPTH = 10;
